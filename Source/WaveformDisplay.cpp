@@ -47,7 +47,9 @@ void WaveformDisplay::paint(juce::Graphics& g)
         float x = bounds.getX() + (float)position * (bounds.getWidth() - 1.0f);
 
         g.setColour(juce::Colours::purple);
-        g.fillRect(x - 0.25f, bounds.getY(), 0.5f, bounds.getHeight());
+
+        float lineWidth = juce::jmax(1.0f, getWidth() / 250.0f / 2);
+        g.fillRect(x - lineWidth / 2.0f, 0.0f, lineWidth, (float)getHeight());
 
         juce::Path path;
         float markerHalfWidth = bounds.getWidth() / 90.0f;

@@ -15,8 +15,8 @@
 PlaylistComponent::PlaylistComponent()
 {
     tableComponent.getHeader().addColumn("Track Title", 1, 200, 100, -1, juce::TableHeaderComponent::defaultFlags);
-    tableComponent.getHeader().addColumn("Duration", 2, 80, 60, -1, juce::TableHeaderComponent::defaultFlags);
-    tableComponent.getHeader().addColumn("", 3, 100, 70, -1, juce::TableHeaderComponent::defaultFlags);
+    tableComponent.getHeader().addColumn("Duration", 2, 80, 50, -1, juce::TableHeaderComponent::defaultFlags);
+    tableComponent.getHeader().addColumn("", 3, 100, 50, -1, juce::TableHeaderComponent::defaultFlags);
 
     tableComponent.setModel(this);
     tableComponent.setColour(juce::TableListBox::backgroundColourId, juce::Colour::fromString("#FF444444"));
@@ -113,7 +113,7 @@ void PlaylistComponent::resized()
 
     tableComponent.setBounds(area);
 
-    int scrollbarWidth = 18; // safe fallback
+    int scrollbarWidth = 18;
 
     if (auto* vp = tableComponent.getViewport())
     {
@@ -121,11 +121,12 @@ void PlaylistComponent::resized()
         scrollbarWidth = vp->getScrollBarThickness();
     }
 
-    const int usableWidth = tableComponent.getWidth() - scrollbarWidth - 4;
-
-    const int durationWidth = 80;
-    const int deleteWidth = 90;
-    const int titleWidth = juce::jmax(100, usableWidth - durationWidth - deleteWidth);
+    const int tableWidth = tableComponent.getWidth() - scrollbarWidth - 4;
+    const int minWidthCol = 50;
+    // duration and delete column takes up 1/7 of the entire width each
+    const int durationWidth = juce::jmax((tableWidth / 7), 50);
+    const int deleteWidth = juce::jmax((tableWidth / 7), 50);
+    const int titleWidth = juce::jmax(100, tableWidth - durationWidth - deleteWidth);
 
     tableComponent.getHeader().setColumnWidth(1, titleWidth);
     tableComponent.getHeader().setColumnWidth(2, durationWidth);

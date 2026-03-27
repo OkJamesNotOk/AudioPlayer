@@ -324,7 +324,7 @@ void PlaylistLooper::buttonClicked(Button* button)
             });
     }
     if (button == &loopButton) {
-        loop = !loop;
+        loop = button->getToggleState();
         persistPlayerState();
     }
     if (button == &loopStartButton) {
@@ -583,6 +583,7 @@ bool PlaylistLooper::keyPressed(const KeyPress& key) {
 void PlaylistLooper::restoreSavedState()
 {
     PlaylistComponent::PlayerState savedState;
+
     if (playlistComponent.loadPlayerState(savedState))
     {
         if (savedState.currentFile.existsAsFile())
@@ -596,18 +597,51 @@ void PlaylistLooper::restoreSavedState()
             volSlider.setValue(savedState.volume, juce::dontSendNotification);
             speedSlider.setValue(savedState.speed, juce::dontSendNotification);
 
-            loopStart = savedState.loopStart;
-            loopEnd = savedState.loopEnd;
-            loop = savedState.loopEnabled;
-
-            loopDisplay.setMarkerStart(loopStart);
-            loopDisplay.setMarkerEnd(loopEnd);
-
             player->setGain(savedState.volume);
             player->setSpeed(savedState.speed);
             player->setPositionRelative(savedState.position);
 
+            // restore stored values
+            loop = savedState.loopEnabled;
+            loopStart = savedState.loopStart;
+            loopEnd = savedState.loopEnd;
+
+            // restore main loop button
             loopButton.setToggleState(loop, juce::dontSendNotification);
+
+            // restore loop start marker
+            if (savedState.loopStart != 0.0)
+            {
+                isStartLoop = true;
+                setStart = false; // important: do NOT wait for next click
+                loopStartButton.setToggleState(true, juce::dontSendNotification);
+                loopDisplay.setMarkerStart(loopStart);
+            }
+            else
+            {
+                isStartLoop = false;
+                setStart = false;
+                loopStart = 0.0;
+                loopStartButton.setToggleState(false, juce::dontSendNotification);
+                loopDisplay.setMarkerStart(loopStart);
+            }
+
+            // restore loop end marker
+            if (savedState.loopEnd != 1.0)
+            {
+                isEndLoop = true;
+                setEnd = false; // important: do NOT wait for next click
+                loopEndButton.setToggleState(true, juce::dontSendNotification);
+                loopDisplay.setMarkerEnd(loopEnd);
+            }
+            else
+            {
+                isEndLoop = false;
+                setEnd = false;
+                loopEnd = 1.0;
+                loopEndButton.setToggleState(false, juce::dontSendNotification);
+                loopDisplay.setMarkerEnd(loopEnd);
+            }
         }
     }
 }

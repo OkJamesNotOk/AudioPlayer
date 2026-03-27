@@ -45,7 +45,9 @@ void AudioLoopDisplay::paint (juce::Graphics& g)
         g.setColour(juce::Colours::red);
 
         // draw a thin vertical line
-        g.fillRect(loopMarkerStart * getWidth() - getWidth() / 250 / 2, 0, getWidth() / 250, getHeight());
+        float lineWidth = juce::jmax(1.0f, getWidth() / 250.0f / 2);
+        float x = (float)loopMarkerStart * getWidth();
+        g.fillRect(x - lineWidth / 2.0f, 0.0f, lineWidth, (float)getHeight());
 
         // Draw triangles to increase visibility of the marker
         juce::Path path;
@@ -66,7 +68,9 @@ void AudioLoopDisplay::paint (juce::Graphics& g)
         g.setColour(juce::Colours::darkblue);
 
         // draw a thin vertical line to indicate the end point of the loop 
-        g.fillRect(loopMarkerEnd * getWidth() - getWidth() / 250 / 2, 0, getWidth() / 250, getHeight());
+        float lineWidth = juce::jmax(1.0f, getWidth() / 250.0f / 2);
+        float x = (float)loopMarkerEnd * getWidth();
+        g.fillRect(x - lineWidth / 2.0f, 0.0f, lineWidth, (float)getHeight());
 
         // Added triangles to increase visibility of the end point marker
         juce::Path path;
