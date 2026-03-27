@@ -30,43 +30,48 @@ WaveformDisplay::~WaveformDisplay()
 {
 }
 
-void WaveformDisplay::paint (juce::Graphics& g)
+void WaveformDisplay::paint(juce::Graphics& g)
 {
-    /* This demo code just fills the component's background and
-       draws some placeholder text to get you started.
-
-       You should replace everything in this method with your own
-       drawing code..
-    */
-
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
     g.fillAll(juce::Colours::darkgrey);
 
-    g.setColour (juce::Colours::grey);
-    g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-    g.setColour(juce::Colours::orange);
+    auto bounds = getLocalBounds().toFloat();
 
-    if (fileLoaded) {
+    g.setColour(juce::Colours::grey);
+    g.drawRect(bounds, 1.0f);
+
+    if (fileLoaded)
+    {
+        g.setColour(juce::Colours::orange);
         audioThumb.drawChannel(g, getLocalBounds(), 0, audioThumb.getTotalLength(), 0, 1.0f);
-        g.setColour(Colours::purple);
-        g.fillRect(position * getWidth() - getWidth() / 250 / 2, 0, 0.5f, getHeight());
+
+        float x = bounds.getX() + (float)position * (bounds.getWidth() - 1.0f);
+
+        g.setColour(juce::Colours::purple);
+        g.fillRect(x - 0.25f, bounds.getY(), 0.5f, bounds.getHeight());
+
         juce::Path path;
+        float markerHalfWidth = bounds.getWidth() / 90.0f;
+        float markerHeight = 10.0f;
+
         path.addTriangle(
-            position * getWidth() - getWidth() / 45 / 2, 0,
-            position * getWidth() + getWidth() / 45 / 2, 0,
-            position * getWidth(), 10
+            x - markerHalfWidth, bounds.getY(),
+            x + markerHalfWidth, bounds.getY(),
+            x, bounds.getY() + markerHeight
         );
+
         path.addTriangle(
-            position * getWidth() - getWidth() / 45 / 2, getHeight(),
-            position * getWidth() + getWidth() / 45 / 2, getHeight(),
-            position * getWidth(), getHeight() - 10
+            x - markerHalfWidth, bounds.getBottom(),
+            x + markerHalfWidth, bounds.getBottom(),
+            x, bounds.getBottom() - markerHeight
         );
+
         g.fillPath(path);
     }
-    else {
+    else
+    {
+        g.setColour(juce::Colours::orange);
         g.setFont(20.0f);
-        g.drawText("File not loaded", getLocalBounds(),
-            juce::Justification::centred, true);   // draw some placeholder text
+        g.drawText("File not loaded", getLocalBounds(), juce::Justification::centred, true);
     }
 }
 
