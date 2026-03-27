@@ -56,8 +56,19 @@ cmake -G "Xcode" -B build .
 
 Then open the generated Xcode project in the `build` folder.
 
+## Option 3: Download from Release
+
+A prebuilt version can be downloaded from the **Releases** section of this repository.
+
+1. Go to the **Releases** page.
+2. Download the latest available build for the system.
+3. Extract the downloaded file if it is provided as a `.zip`.
+4. Run the executable from the extracted folder.
+
 ## Disclaimer
 
 The Projucer and Visual Studio workflow has been used for this project.
 
 The CMake version is included, but it has not been personally tested, so additional setup or adjustments may be required depending on the system and development environment.
+
+This project was originally developed as a school project and later improved as a personal project. The released build may still have performance limitations and is not fully resource efficient.
