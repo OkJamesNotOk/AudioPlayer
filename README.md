@@ -61,9 +61,9 @@ Then open the generated Xcode project in the `build` folder.
 A prebuilt version can be downloaded from the **Releases** section of this repository.
 
 1. Go to the **Releases** page.
-2. Download the latest available build for the system.
-3. Extract the downloaded file if it is provided as a `.zip`.
-4. Run the executable from the extracted folder.
+2. Download the latest available build.
+3. Extract the downloaded file `.zip` file. It should be a `.zip` file.
+4. Run the `.exe` from the extracted folder.
 
 ## Features
 
