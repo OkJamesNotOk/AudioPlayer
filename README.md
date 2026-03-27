@@ -65,6 +65,15 @@ A prebuilt version can be downloaded from the **Releases** section of this repos
 3. Extract the downloaded file if it is provided as a `.zip`.
 4. Run the executable from the extracted folder.
 
+## Features
+
+- Load and play audio files
+- Drag and drop tracks from the playlist into the player
+- Save and restore playback state between sessions
+- Remember previously loaded tracks and playlist state
+- Store user settings such as volume and playback speed
+- Set loop start and end points for repeated playback
+
 ## Disclaimer
 
 The Projucer and Visual Studio workflow has been used for this project.
