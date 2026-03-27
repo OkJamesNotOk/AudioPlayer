@@ -73,11 +73,10 @@ A prebuilt version can be downloaded from the **Releases** section of this repos
 - Remember previously loaded tracks and playlist state
 - Store user settings such as volume and playback speed
 - Set loop start and end points for repeated playback
+- Filter playlist and search for specific track
 
 ## Disclaimer
 
-The Projucer and Visual Studio workflow has been used for this project.
-
-The CMake version is included, but it has not been personally tested, so additional setup or adjustments may be required depending on the system and development environment.
+The Projucer and Visual Studio workflow has been used for this project The CMake version is included, but it has not been personally tested, so additional setup or adjustments may be required depending on the system and development environment.
 
 This project was originally developed as a school project and later improved as a personal project. The released build may still have performance limitations and is not fully resource efficient.
