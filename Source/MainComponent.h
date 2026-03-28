@@ -34,6 +34,10 @@ public:
     void paint(Graphics& g) override;
     void resized() override;
 
+    void taskbarPlayPause();
+    void taskbarPrevious();
+    void taskbarNext();
+
 private:
 
     AudioFormatManager formatManager;

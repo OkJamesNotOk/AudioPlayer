@@ -84,6 +84,19 @@ void MainComponent::resized()
     flexBox.performLayout(getLocalBounds());
 }
 
+void MainComponent::taskbarPlayPause()
+{
+    playlistLooper.taskbarPlayPause();
+}
 
+void MainComponent::taskbarPrevious()
+{
+    playlistLooper.taskbarPrevious();
+}
+
+void MainComponent::taskbarNext()
+{
+    playlistLooper.taskbarNext();
+}
 
 

@@ -3,7 +3,7 @@
 
     CustomLookAndFeelButton.h
     Created: 27 Mar 2026 2:51:06am
-    Author:  PhanKien
+    Author:  OkJames
 
   ==============================================================================
 */
@@ -20,4 +20,10 @@ public:
     juce::Font getTextButtonFont(juce::TextButton& button, int buttonHeight) override;
     juce::Font getLabelFont(juce::Label& label) override;
     juce::Font getSliderPopupFont(juce::Slider& slider) override;
+
+    void drawButtonBackground(juce::Graphics& g,
+        juce::Button& button,
+        const juce::Colour& backgroundColour,
+        bool shouldDrawButtonAsHighlighted,
+        bool shouldDrawButtonAsDown) override;
 };

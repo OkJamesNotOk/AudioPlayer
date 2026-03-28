@@ -3,7 +3,7 @@
 
     DJAudioPlayer.h
     Created: 18 Jan 2025 3:02:48pm
-    Author:  PhanKien
+    Author:  OkJames
 
   ==============================================================================
 */

@@ -3,7 +3,7 @@
 
     CustomLookAndFeelButton.cpp
     Created: 27 Mar 2026 2:51:06am
-    Author:  PhanKien
+    Author:  OkJames
 
   ==============================================================================
 */
@@ -52,4 +52,28 @@ juce::Font CustomLookAndFeelButton::getSliderPopupFont(juce::Slider& slider)
     const float clampedSize = juce::jlimit(11.0f, 20.0f, hybridSize);
 
     return juce::Font(clampedSize);
+}
+
+void CustomLookAndFeelButton::drawButtonBackground(juce::Graphics& g,
+    juce::Button& button,
+    const juce::Colour& backgroundColour,
+    bool shouldDrawButtonAsHighlighted,
+    bool shouldDrawButtonAsDown)
+{
+    auto bounds = button.getLocalBounds().toFloat().reduced(1.0f);
+
+    float cornerSize = 18.0f;
+
+    auto colour = backgroundColour;
+
+    if (shouldDrawButtonAsDown)
+        colour = colour.darker(0.2f);
+    else if (shouldDrawButtonAsHighlighted)
+        colour = colour.brighter(0.1f);
+
+    g.setColour(colour);
+    g.fillRoundedRectangle(bounds, cornerSize);
+
+    g.setColour(juce::Colours::black);
+    g.drawRoundedRectangle(bounds, cornerSize, 0.5f);
 }

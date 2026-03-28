@@ -3,7 +3,7 @@
 
     PlaylistComponent.h
     Created: 8 Feb 2025 8:40:10am
-    Author:  PhanKien
+    Author:  OkJames
 
   ==============================================================================
 */
@@ -84,9 +84,15 @@ public:
     void savePlayerState(const PlayerState& state);
     bool loadPlayerState(PlayerState& state) const;
 
-    // Functions to save and load playlist
+    // Functions to save and load and clear playlist
     void savePlaylist();
     void loadPlaylist();
+    void clearAllPlaylist();
+
+    void setCurrentPlayingFile(const juce::File& file);
+
+    bool moveTrackUp(const juce::File& file);
+    bool moveTrackDown(const juce::File& file);
 
 private:
     TableListBox tableComponent;
@@ -108,6 +114,10 @@ private:
     juce::TextButton addFile{ "Add File" };
 
     juce::TextButton saveButton{ "Save Playlist" };
+
+    juce::TextButton clearPlaylist{ "Clear Playlist" };
+
+    juce::File currentPlayingFile;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlaylistComponent)
 };

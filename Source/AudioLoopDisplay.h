@@ -3,7 +3,7 @@
 
     AudioLoopDisplay.h
     Created: 26 Feb 2025 9:17:42pm
-    Author:  PhanKien
+    Author:  OkJames
 
   ==============================================================================
 */

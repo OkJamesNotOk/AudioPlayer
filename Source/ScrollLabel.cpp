@@ -3,7 +3,7 @@
 
     ScrollLabel.cpp
     Created: 18 Feb 2025 8:53:05pm
-    Author:  PhanKien
+    Author:  OkJames
 
   ==============================================================================
 */

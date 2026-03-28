@@ -3,7 +3,7 @@
 
     DJAudioPlayer.cpp
     Created: 18 Jan 2025 3:02:48pm
-    Author:  PhanKien
+    Author:  OkJames
 
   ==============================================================================
 */
@@ -32,7 +32,13 @@ void DJAudioPlayer::releaseResources() {
 }
 
 double DJAudioPlayer::getPositionRelative() {
-    return transportSource.getCurrentPosition() / transportSource.getLengthInSeconds();
+    //return transportSource.getCurrentPosition() / transportSource.getLengthInSeconds();
+
+    double length = transportSource.getLengthInSeconds();
+    if (length <= 0.0)
+        return 0.0;
+
+    return transportSource.getCurrentPosition() / length;
 }
 
 void DJAudioPlayer::loadURL(URL audioURL) {

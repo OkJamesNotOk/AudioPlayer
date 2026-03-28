@@ -3,7 +3,7 @@
 
     PlaylistLooper.cpp
     Created: 26 Mar 2026 11:02:59pm
-    Author:  PhanKien
+    Author:  OkJames
     Should have named this PlaylistPlayer instead smh
   ==============================================================================
 */
@@ -69,8 +69,8 @@ void PlaylistLooper::initialiseButtonGroups()
     loopButtons = { &loopButton, &loopStartButton, &loopEndButton };
     rowButtons =
     {
-        &playButton,
         &prevButton,
+        &playButton,
         &nextButton,
         &loopButton,
         &loopStartButton,
@@ -211,18 +211,35 @@ void PlaylistLooper::resized()
     posSlider.setBounds(leftPanel.removeFromTop(rowH));
 
     // Waveform display 
-    auto displayArea = leftPanel.removeFromTop(rowH * 5);
+    auto displayArea = leftPanel.removeFromTop(rowH * 4);
     waveformDisplay.setBounds(displayArea);
 
     // Loop display
     loopDisplay.setBounds(displayArea);
 
-    // Buttons 
-    auto buttonRow = leftPanel;
-    auto buttonW = buttonRow.getWidth() / static_cast<int>(rowButtons.size());
-    for (auto* button : rowButtons)
+    // Buttons area
+    auto buttonArea = leftPanel;
+
+    const int buttonsPerRow = 3;
+    const int buttonCount = static_cast<int>(rowButtons.size());
+    const int numRows = (buttonCount + buttonsPerRow - 1) / buttonsPerRow;
+
+    const int rowHeight = (numRows > 0) ? buttonArea.getHeight() / numRows : 0;
+
+    for (int i = 0; i < buttonCount; ++i)
     {
-        button->setBounds(buttonRow.removeFromLeft(buttonW));
+        const int row = i / buttonsPerRow;
+        const int col = i % buttonsPerRow;
+
+        auto currentRowArea = buttonArea.withTrimmedTop(row * rowHeight).removeFromTop(rowHeight);
+
+        const int buttonsInThisRow = juce::jmin(buttonsPerRow, buttonCount - row * buttonsPerRow);
+        const int buttonWidth = (buttonsInThisRow > 0) ? currentRowArea.getWidth() / buttonsInThisRow : 0;
+
+        rowButtons[i]->setBounds(
+            currentRowArea.withTrimmedLeft(col * buttonWidth)
+            .removeFromLeft(buttonWidth)
+        );
     }
 
     // Volume slider and speed slider
@@ -233,6 +250,8 @@ void PlaylistLooper::resized()
 
 void PlaylistLooper::persistPlayerState()
 {
+    if (!currentFile.existsAsFile())
+        return;
     PlaylistComponent::PlayerState state;
     state.currentFile = currentFile;
     state.position = posSlider.getValue();
@@ -266,6 +285,7 @@ void PlaylistLooper::buttonClicked(Button* button)
         if (previousTrack.existsAsFile())
         {
             currentFile = previousTrack;
+            playlistComponent.setCurrentPlayingFile(currentFile);
             player->loadURL(juce::URL{ previousTrack });
             waveformDisplay.loadURL(juce::URL{ previousTrack });
             scrollLabelTextSet(previousTrack.getFileName());
@@ -281,6 +301,7 @@ void PlaylistLooper::buttonClicked(Button* button)
         if (nextTrack.existsAsFile())
         {
             currentFile = nextTrack;
+            playlistComponent.setCurrentPlayingFile(currentFile);
             player->loadURL(juce::URL{ nextTrack });
             waveformDisplay.loadURL(juce::URL{ nextTrack });
             scrollLabelTextSet(nextTrack.getFileName());
@@ -314,6 +335,7 @@ void PlaylistLooper::buttonClicked(Button* button)
                     if (file.hasFileExtension(".mp3;.wav;.flac")) {
                         player->loadURL(URL{ file });
                         currentFile = file;
+                        playlistComponent.setCurrentPlayingFile(currentFile);
                         waveformDisplay.loadURL(URL{ file });
                         playButton.setToggleState(true, juce::NotificationType::dontSendNotification);
                         playButton.triggerClick();
@@ -376,7 +398,7 @@ void PlaylistLooper::sliderValueChanged(Slider* slider)
     if (slider == &posSlider)
     {
         player->setPositionRelative(slider->getValue());
-        persistPlayerState();
+        //persistPlayerState();
     }
 }
 
@@ -502,10 +524,25 @@ void PlaylistLooper::filesDropped(const StringArray& files, int x, int y)
 {
     if (files.size() == 1)
     {
-        URL fileURL = URL{ File{files[0]} };
+        currentFile = juce::File{ files[0] };
+        playlistComponent.setCurrentPlayingFile(currentFile);
+
+        juce::URL fileURL{ currentFile };
         player->loadURL(fileURL);
         waveformDisplay.loadURL(fileURL);
-        scrollLabelTextSet(String(fileURL.getFileName()));
+
+        playlistComponent.addFileToPlaylist(currentFile);
+        playlistComponent.setCurrentPlayingFile(currentFile);
+
+        // changed to File instead of URL, for proper unicode filename display
+        scrollLabelTextSet(currentFile.getFileName());
+
+        if (autoplay)
+        {
+            playButton.setToggleState(false, juce::NotificationType::dontSendNotification);
+            playButton.triggerClick();
+        }
+        persistPlayerState();
     }
 }
 
@@ -513,7 +550,17 @@ void PlaylistLooper::timerCallback() {
     double g = player->getPositionRelative();
     waveformDisplay.setPositionRelative(g);
     if (!isnan(g)) {
-        posSlider.setValue(g);
+        posSlider.setValue(g, juce::dontSendNotification);
+
+        ++saveCounter;
+        // saveinterval * 500ms = interval in seconds (e.g 20 * 500 = 10000ms = 10s)
+        if (saveCounter >= saveInterval) 
+        {
+            persistPlayerState();
+            saveCounter = 0;
+        }
+
+
         // check if track ended or passed the end point of the loop
         if (posSlider.getValue() >= loopEnd) {
             // if loop is not on, stop the player
@@ -523,6 +570,7 @@ void PlaylistLooper::timerCallback() {
                 juce::File nextTrack = playlistComponent.getNextTrack(currentFile);
                 if (nextTrack.existsAsFile()) {
                     currentFile = nextTrack;
+                    playlistComponent.setCurrentPlayingFile(currentFile);
                     player->loadURL(juce::URL{ nextTrack });
                     waveformDisplay.loadURL(juce::URL{ nextTrack });
                     scrollLabelTextSet(nextTrack.getFileName());
@@ -534,7 +582,9 @@ void PlaylistLooper::timerCallback() {
                     playButton.triggerClick();
                 }
             }
-            posSlider.setValue(loopStart);
+            //posSlider.setValue(loopStart);
+            player->setPositionRelative(loopStart);
+            posSlider.setValue(loopStart, juce::dontSendNotification);
             // if loop is on, play the track
             if (loop) {
                 playButton.setToggleState(false, juce::NotificationType::dontSendNotification);
@@ -561,10 +611,13 @@ void PlaylistLooper::itemDropped(const SourceDetails& filename) {
     File file(filePath);
     if (file.existsAsFile()) {
         currentFile = file;
+        playlistComponent.setCurrentPlayingFile(currentFile);
         player->loadURL(URL{ file });
         waveformDisplay.loadURL(URL{ file });
-        playButton.setToggleState(true, juce::NotificationType::dontSendNotification);
-        playButton.triggerClick();
+        if (autoplay) {
+            playButton.setToggleState(false, juce::NotificationType::dontSendNotification);
+            playButton.triggerClick();
+        }
         scrollLabelTextSet(String(file.getFileName()));
         persistPlayerState();
     }
@@ -589,6 +642,7 @@ void PlaylistLooper::restoreSavedState()
         if (savedState.currentFile.existsAsFile())
         {
             currentFile = savedState.currentFile;
+            playlistComponent.setCurrentPlayingFile(currentFile);
             player->loadURL(juce::URL{ currentFile });
             waveformDisplay.loadURL(juce::URL{ currentFile });
             scrollLabelTextSet(currentFile.getFileName());
@@ -613,7 +667,7 @@ void PlaylistLooper::restoreSavedState()
             if (savedState.loopStart != 0.0)
             {
                 isStartLoop = true;
-                setStart = false; // important: do NOT wait for next click
+                setStart = false;
                 loopStartButton.setToggleState(true, juce::dontSendNotification);
                 loopDisplay.setMarkerStart(loopStart);
             }
@@ -644,4 +698,19 @@ void PlaylistLooper::restoreSavedState()
             }
         }
     }
+}
+
+void PlaylistLooper::taskbarPlayPause()
+{
+    playButton.triggerClick();
+}
+
+void PlaylistLooper::taskbarPrevious()
+{
+    prevButton.triggerClick();
+}
+
+void PlaylistLooper::taskbarNext()
+{
+    nextButton.triggerClick();
 }

@@ -3,7 +3,7 @@
 
     PlaylistLooper.h
     Created: 18 Jan 2025 4:07:59pm
-    Author:  PhanKien
+    Author:  OkJames
 
   ==============================================================================
 */
@@ -73,6 +73,11 @@ public:
 
     void restoreSavedState();
 
+    // window thumbnail task
+    void taskbarPlayPause();
+    void taskbarPrevious();
+    void taskbarNext();
+
 private:
     // file chooser, used to add files into the player or the playlist
     FileChooser fChooser{ "Select a file..." };
@@ -141,6 +146,13 @@ private:
     CustomLookAndFeelButton customButton;
 
     void persistPlayerState();
+
+    int saveCounter = 0;
+    // actual save time = saveInterval * 500 ms
+    // e.g. 20 * 500 ms = 10000 ms = 10 seconds
+    int saveInterval = 20;
+
+    bool autoplay = true;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlaylistLooper)
 };

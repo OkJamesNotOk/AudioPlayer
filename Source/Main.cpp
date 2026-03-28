@@ -11,92 +11,90 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "MainComponent.h"
 
+#if JUCE_WINDOWS
+#include <windows.h>
+#include <shobjidl.h>
+#include <commctrl.h>
+#include <wrl/client.h>
+#pragma comment(lib, "Ole32.lib")
+#endif
+
 //==============================================================================
-class OtoDecksApplication  : public JUCEApplication
+class OtoDecksApplication : public JUCEApplication
 {
 public:
     //==============================================================================
     OtoDecksApplication() {}
-    const String getApplicationName() override       { return ProjectInfo::projectName; }
-    const String getApplicationVersion() override    { return ProjectInfo::versionString; }
-    bool moreThanOneInstanceAllowed() override       { return true; }
+    const String getApplicationName() override { return ProjectInfo::projectName; }
+    const String getApplicationVersion() override { return ProjectInfo::versionString; }
+    bool moreThanOneInstanceAllowed() override { return true; }
 
     //==============================================================================
-    void initialise (const String& commandLine) override
+    void initialise(const String& commandLine) override
     {
-        // This method is where you should put your application's initialisation code..
-
-        mainWindow.reset (new MainWindow (getApplicationName()));
+        mainWindow.reset(new MainWindow(getApplicationName()));
     }
 
     void shutdown() override
     {
-        // Add your application's shutdown code here..
         if (mainWindow != nullptr)
             mainWindow->saveWindowState();
-        mainWindow = nullptr; // (deletes our window)
+
+        mainWindow = nullptr;
     }
 
     //==============================================================================
     void systemRequestedQuit() override
     {
-        // This is called when the app is being asked to quit: you can ignore this
-        // request and let the app carry on running, or call quit() to allow the app to close.
         quit();
     }
 
-    void anotherInstanceStarted (const String& commandLine) override
+    void anotherInstanceStarted(const String& commandLine) override
     {
-        // When another instance of the app is launched while this one is running,
-        // this method is invoked, and the commandLine parameter tells you what
-        // the other instance's command-line arguments were.
     }
 
     //==============================================================================
-    /*
-        This class implements the desktop window that contains an instance of
-        our MainComponent class.
-    */
-    class MainWindow    : public DocumentWindow
+    class MainWindow : public DocumentWindow
     {
     public:
-        MainWindow (String name)  : DocumentWindow (name,
-                                                    Desktop::getInstance().getDefaultLookAndFeel()
-                                                                          .findColour (ResizableWindow::backgroundColourId),
-                                                    DocumentWindow::allButtons)
+        MainWindow(String name)
+            : DocumentWindow(name,
+                Desktop::getInstance().getDefaultLookAndFeel()
+                .findColour(ResizableWindow::backgroundColourId),
+                DocumentWindow::allButtons)
         {
-            setUsingNativeTitleBar (true);
-            setContentOwned (new MainComponent(), true);
+            setUsingNativeTitleBar(true);
+            setContentOwned(new MainComponent(), true);
 
-            #if JUCE_IOS || JUCE_ANDROID
-                        setFullScreen(true);
-            #else
-                        setResizable(true, true);
-                        restoreWindowState();
+#if JUCE_IOS || JUCE_ANDROID
+            setFullScreen(true);
+#else
+            setResizable(true, true);
+            restoreWindowState();
 
-                        if (getWidth() <= 0 || getHeight() <= 0)
-                            centreWithSize(400, 600);
-            #endif
+            if (getWidth() <= 0 || getHeight() <= 0)
+                centreWithSize(400, 600);
+#endif
 
             setVisible(true);
+
+#if JUCE_WINDOWS
+            initialiseTaskbarButtons();
+#endif
+        }
+
+        ~MainWindow() override
+        {
+#if JUCE_WINDOWS
+            shutdownTaskbarButtons();
+#endif
         }
 
         void closeButtonPressed() override
         {
-            // This is called when the user tries to close this window. Here, we'll just
-            // ask the app to quit when this happens, but you can change this to do
-            // whatever you need.
-    
             saveWindowState();
             JUCEApplication::getInstance()->systemRequestedQuit();
         }
-
-        /* Note: Be careful if you override any DocumentWindow methods - the base
-           class uses a lot of them, so by overriding you might break its functionality.
-           It's best to do all your work in your content component instead, but if
-           you really have to override any DocumentWindow methods, make sure your
-           subclass also calls the superclass's method.
-        */
 
         juce::File getWindowStateFile() const
         {
@@ -118,7 +116,114 @@ public:
         }
 
     private:
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)
+#if JUCE_WINDOWS
+        enum ThumbButtonIds
+        {
+            thumbPrev = 1001,
+            thumbPlayPause = 1002,
+            thumbNext = 1003
+        };
+
+        Microsoft::WRL::ComPtr<ITaskbarList3> taskbarList;
+        HWND hwnd = nullptr;
+        UINT taskbarButtonCreatedMessage = 0;
+
+        static constexpr UINT_PTR taskbarSubclassId = 1;
+
+        void initialiseTaskbarButtons()
+        {
+            if (auto* peer = getPeer())
+                hwnd = static_cast<HWND>(peer->getNativeHandle());
+
+            if (hwnd == nullptr)
+                return;
+
+            taskbarButtonCreatedMessage = RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
+
+            HRESULT hr = CoCreateInstance(CLSID_TaskbarList, nullptr,
+                CLSCTX_INPROC_SERVER,
+                IID_PPV_ARGS(&taskbarList));
+
+            if (SUCCEEDED(hr) && taskbarList != nullptr)
+            {
+                taskbarList->HrInit();
+                SetWindowSubclass(hwnd, taskbarSubclassProc, taskbarSubclassId,
+                    reinterpret_cast<DWORD_PTR>(this));
+            }
+        }
+
+        void addTaskbarThumbButtons()
+        {
+            if (taskbarList == nullptr || hwnd == nullptr)
+                return;
+
+            THUMBBUTTON buttons[3] = {};
+
+            buttons[0].dwMask = THB_FLAGS | THB_TOOLTIP;
+            buttons[0].iId = thumbPrev;
+            buttons[0].dwFlags = THBF_ENABLED;
+            wcscpy_s(buttons[0].szTip, L"Previous");
+
+            buttons[1].dwMask = THB_FLAGS | THB_TOOLTIP;
+            buttons[1].iId = thumbPlayPause;
+            buttons[1].dwFlags = THBF_ENABLED;
+            wcscpy_s(buttons[1].szTip, L"Play / Pause");
+
+            buttons[2].dwMask = THB_FLAGS | THB_TOOLTIP;
+            buttons[2].iId = thumbNext;
+            buttons[2].dwFlags = THBF_ENABLED;
+            wcscpy_s(buttons[2].szTip, L"Next");
+
+            taskbarList->ThumbBarAddButtons(hwnd, 3, buttons);
+        }
+
+        void shutdownTaskbarButtons()
+        {
+            if (hwnd != nullptr)
+                RemoveWindowSubclass(hwnd, taskbarSubclassProc, taskbarSubclassId);
+
+            taskbarList.Reset();
+            hwnd = nullptr;
+        }
+
+        static LRESULT CALLBACK taskbarSubclassProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam,
+            UINT_PTR, DWORD_PTR refData)
+        {
+            auto* window = reinterpret_cast<MainWindow*>(refData);
+
+            if (window != nullptr)
+            {
+                if (message == window->taskbarButtonCreatedMessage)
+                {
+                    window->addTaskbarThumbButtons();
+                    return 0;
+                }
+
+                if (message == WM_COMMAND && HIWORD(wParam) == THBN_CLICKED)
+                {
+                    if (auto* main = window->getMainComponent())
+                    {
+                        switch (LOWORD(wParam))
+                        {
+                        case thumbPrev:      main->taskbarPrevious();  return 0;
+                        case thumbPlayPause: main->taskbarPlayPause(); return 0;
+                        case thumbNext:      main->taskbarNext();      return 0;
+                        default: break;
+                        }
+                    }
+                }
+            }
+
+            return DefSubclassProc(hWnd, message, wParam, lParam);
+        }
+#endif
+
+        MainComponent* getMainComponent() const
+        {
+            return dynamic_cast<MainComponent*> (getContentComponent());
+        }
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainWindow)
     };
 
 private:
@@ -127,4 +232,4 @@ private:
 
 //==============================================================================
 // This macro generates the main() routine that launches the app.
-START_JUCE_APPLICATION (OtoDecksApplication)
+START_JUCE_APPLICATION(OtoDecksApplication)

@@ -3,7 +3,7 @@
 
     WaveformDisplay.h
     Created: 24 Jan 2025 7:54:09pm
-    Author:  PhanKien
+    Author:  OkJames
 
   ==============================================================================
 */
