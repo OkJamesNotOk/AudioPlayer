@@ -1,5 +1,7 @@
 Personal project built from a school project and further improved, app not really resource efficient though.
 
+<img src="./images/preview.png" alt="Project screenshot" width="600">
+
 # Building the JUCE Project
 
 This project includes both `.jucer` and CMake versions.
