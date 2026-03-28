@@ -14,11 +14,11 @@
 //==============================================================================
 PlaylistComponent::PlaylistComponent()
 {
-    tableComponent.getHeader().addColumn("Track Title", 1, 200, 100, -1, juce::TableHeaderComponent::defaultFlags);
-    tableComponent.getHeader().addColumn("Length", 2, 80, 40, -1, juce::TableHeaderComponent::defaultFlags);
-    tableComponent.getHeader().addColumn("Up", 3, 60, 25, -1, juce::TableHeaderComponent::defaultFlags);
-    tableComponent.getHeader().addColumn("Dn", 4, 60, 25, -1, juce::TableHeaderComponent::defaultFlags);
-    tableComponent.getHeader().addColumn("", 5, 100, 40, -1, juce::TableHeaderComponent::defaultFlags);
+    tableComponent.getHeader().addColumn("Track Title", 1, 200, 80, -1, juce::TableHeaderComponent::defaultFlags);
+    tableComponent.getHeader().addColumn("Duration", 2, 80, minDurationColW, -1, juce::TableHeaderComponent::defaultFlags);
+    tableComponent.getHeader().addColumn("Up", 3, 60, minOrderColW, -1, juce::TableHeaderComponent::defaultFlags);
+    tableComponent.getHeader().addColumn("Dn", 4, 60, minOrderColW, -1, juce::TableHeaderComponent::defaultFlags);
+    tableComponent.getHeader().addColumn("", 5, 100, minColW, -1, juce::TableHeaderComponent::defaultFlags);
 
     tableComponent.setModel(this);
     tableComponent.setColour(juce::TableListBox::backgroundColourId, juce::Colour::fromString("#FF444444"));
@@ -142,11 +142,10 @@ void PlaylistComponent::resized()
     }
 
     const int tableWidth = tableComponent.getWidth() - scrollbarWidth - 4;
-    const int minWidthCol = 50;
-    const int segment = 8;
-    // duration and delete column takes up 1/8 of the entire width each
-    const int colW = juce::jmax((tableWidth / segment), 40);
-    const int colWhalf = juce::jmax((tableWidth / segment / 2), 25);
+    const int segment = 20;    
+
+    const int colW = juce::jmax((tableWidth / segment), minDurationColW);
+    const int colWhalf = juce::jmax((colW / 2), minOrderColW);
     const int titleWidth = juce::jmax(50, tableWidth - colW * 2 - colWhalf * 2);
 
     tableComponent.getHeader().setColumnWidth(1, titleWidth);

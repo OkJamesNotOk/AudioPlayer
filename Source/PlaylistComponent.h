@@ -119,5 +119,9 @@ private:
 
     juce::File currentPlayingFile;
 
+    int minColW = 40;
+    int minDurationColW = 50;
+    int minOrderColW = 22;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlaylistComponent)
 };
