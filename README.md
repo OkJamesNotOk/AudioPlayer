@@ -77,6 +77,7 @@ A prebuilt version can be downloaded from the **Releases** section of this repos
 
 ## Disclaimer
 
-The Projucer and Visual Studio workflow has been used for this project The CMake version is included, but it has not been personally tested, so additional setup or adjustments may be required depending on the system and development environment.
+The Projucer and Visual Studio has been used for this project on Win10.
+The CMake version is included, but it has not been personally tested, so additional setup or adjustments may be required depending on the system and development environment.
 
 This project was originally developed as a school project and later improved as a personal project. The released build may still have performance limitations and is not fully resource efficient.
