@@ -74,9 +74,17 @@ public:
     void restoreSavedState();
 
     // window thumbnail task
-    void taskbarPlayPause();
+    bool taskbarPlayPause();
     void taskbarPrevious();
     void taskbarNext();
+
+    bool isPlaying() const;
+    bool setPlaybackState(bool shouldPlay);
+
+    std::function<void(bool)> onPlaybackStateChanged;
+
+    void setAutoPlayEnabled(bool enabled);
+    bool getAutoPlayEnabled() const { return autoplay; }
 
 private:
     // file chooser, used to add files into the player or the playlist
@@ -86,15 +94,15 @@ private:
     void initialiseSliders();
     void initialiseButtonGroups();
 
-    std::vector<juce::TextButton*> transportButtons;
-    std::vector<juce::TextButton*> loopButtons;
-    std::vector<juce::TextButton*> rowButtons;
+    std::vector<juce::Button*> transportButtons;
+    std::vector<juce::Button*> loopButtons;
+    std::vector<juce::Button*> rowButtons;
 
-    TextButton playButton{ ">" };
+    juce::DrawableButton playButton{ "playButton", juce::DrawableButton::ImageOnButtonBackground };
+    juce::DrawableButton prevButton{ "prevButton", juce::DrawableButton::ImageOnButtonBackground };
+    juce::DrawableButton nextButton{ "nextButton", juce::DrawableButton::ImageOnButtonBackground };
     TextButton loadButton{ "LOAD" };
     TextButton loopButton{ "LOOP" };
-    TextButton prevButton{ "|<<"};
-    TextButton nextButton{ ">>|"};
 
     // used to determine whether the player should loop back to the beginning or the start of 
     // the specified loop when the track is finished or the track has reach the end specified loop

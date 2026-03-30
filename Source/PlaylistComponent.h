@@ -13,6 +13,9 @@
 #include <JuceHeader.h>
 #include <vector>
 #include <string>
+#include "ImageHelper.h"
+#include "MoveButtonsComponent.h"
+#include "ScrollLabel.h"
 
 //==============================================================================
 /*
@@ -94,6 +97,13 @@ public:
     bool moveTrackUp(const juce::File& file);
     bool moveTrackDown(const juce::File& file);
 
+    std::unique_ptr<juce::Drawable> trashDrawable;
+    std::unique_ptr<juce::Drawable> upDrawable;
+    std::unique_ptr<juce::Drawable> downDrawable;
+
+    void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
+    int currentRow = -1;
+
 private:
     TableListBox tableComponent;
 
@@ -121,7 +131,8 @@ private:
 
     int minColW = 40;
     int minDurationColW = 50;
-    int minOrderColW = 22;
+    int minOrderColW = 15;
+    int minDelColW = 25;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlaylistComponent)
 };

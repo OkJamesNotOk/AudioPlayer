@@ -1,9 +1,9 @@
 /*
   ==============================================================================
 
-    This file was auto-generated!
-
-    It contains the basic startup code for a JUCE application.
+    PlaylistLooper.h
+    Created: 18 Jan 2025 4:07:59pm
+    Author:  OkJames
 
   ==============================================================================
 */
@@ -66,10 +66,19 @@ public:
             setUsingNativeTitleBar(true);
             setContentOwned(new MainComponent(), true);
 
+            if (auto* main = getMainComponent())
+            {
+                main->onPlaybackStateChanged = [this](bool playing)
+                    {
+                        updateTaskbarPlayPauseButton(playing);
+                    };
+            }
+
 #if JUCE_IOS || JUCE_ANDROID
             setFullScreen(true);
 #else
             setResizable(true, true);
+            setResizeLimits(320, 280, 2000, 2000);
             restoreWindowState();
 
             if (getWidth() <= 0 || getHeight() <= 0)
@@ -128,7 +137,93 @@ public:
         HWND hwnd = nullptr;
         UINT taskbarButtonCreatedMessage = 0;
 
+        HICON hIconPrev = nullptr;
+        HICON hIconPlay = nullptr;
+        HICON hIconPause = nullptr;
+        HICON hIconNext = nullptr;
+
         static constexpr UINT_PTR taskbarSubclassId = 1;
+
+
+        HICON loadIconFromMemory(const void* data, int dataSize)
+        {
+            if (data == nullptr || dataSize <= 0)
+                return nullptr;
+
+            auto* bytes = static_cast<const unsigned char*>(data);
+
+            struct IconDir
+            {
+                uint16_t reserved;
+                uint16_t type;
+                uint16_t count;
+            };
+
+            struct IconDirEntry
+            {
+                uint8_t  width;
+                uint8_t  height;
+                uint8_t  colourCount;
+                uint8_t  reserved;
+                uint16_t planes;
+                uint16_t bitCount;
+                uint32_t bytesInRes;
+                uint32_t imageOffset;
+            };
+
+            if (dataSize < (int)sizeof(IconDir))
+                return nullptr;
+
+            auto* dir = reinterpret_cast<const IconDir*>(bytes);
+
+            if (dir->reserved != 0 || dir->type != 1 || dir->count == 0)
+                return nullptr;
+
+            auto entriesOffset = sizeof(IconDir);
+            auto entriesSize = dir->count * sizeof(IconDirEntry);
+
+            if (dataSize < (int)(entriesOffset + entriesSize))
+                return nullptr;
+
+            auto* entries = reinterpret_cast<const IconDirEntry*>(bytes + entriesOffset);
+
+            const IconDirEntry* bestEntry = nullptr;
+
+            for (int i = 0; i < dir->count; ++i)
+            {
+                const auto& entry = entries[i];
+
+                if (entry.imageOffset + entry.bytesInRes > (uint32_t)dataSize)
+                    continue;
+
+                if (bestEntry == nullptr)
+                    bestEntry = &entry;
+                else
+                {
+                    int bestScore = std::abs((bestEntry->width == 0 ? 256 : bestEntry->width) - 16)
+                        + std::abs((bestEntry->height == 0 ? 256 : bestEntry->height) - 16);
+
+                    int newScore = std::abs((entry.width == 0 ? 256 : entry.width) - 16)
+                        + std::abs((entry.height == 0 ? 256 : entry.height) - 16);
+
+                    if (newScore < bestScore)
+                        bestEntry = &entry;
+                }
+            }
+
+            if (bestEntry == nullptr)
+                return nullptr;
+
+            return CreateIconFromResourceEx(
+                const_cast<PBYTE>(bytes + bestEntry->imageOffset),
+                bestEntry->bytesInRes,
+                TRUE,
+                0x00030000,
+                16,
+                16,
+                LR_DEFAULTCOLOR
+            );
+        }
 
         void initialiseTaskbarButtons()
         {
@@ -139,6 +234,18 @@ public:
                 return;
 
             taskbarButtonCreatedMessage = RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
+
+            hIconPrev = loadIconFromMemory(BinaryData::skipbackcircle_ico,
+                BinaryData::skipbackcircle_icoSize);
+
+            hIconPlay = loadIconFromMemory(BinaryData::playcircle_ico,
+                BinaryData::playcircle_icoSize);
+
+            hIconPause = loadIconFromMemory(BinaryData::pausecircle_ico,
+                BinaryData::pausecircle_icoSize);
+
+            hIconNext = loadIconFromMemory(BinaryData::skipforwardcircle_ico,
+                BinaryData::skipforwardcircle_icoSize);
 
             HRESULT hr = CoCreateInstance(CLSID_TaskbarList, nullptr,
                 CLSCTX_INPROC_SERVER,
@@ -159,19 +266,25 @@ public:
 
             THUMBBUTTON buttons[3] = {};
 
-            buttons[0].dwMask = THB_FLAGS | THB_TOOLTIP;
+            buttons[0].dwMask = THB_FLAGS | THB_TOOLTIP | THB_ICON;
             buttons[0].iId = thumbPrev;
             buttons[0].dwFlags = THBF_ENABLED;
+            buttons[0].hIcon = hIconPrev;
             wcscpy_s(buttons[0].szTip, L"Previous");
 
-            buttons[1].dwMask = THB_FLAGS | THB_TOOLTIP;
+            bool playing = false;
+            if (auto* main = getMainComponent())
+                playing = main->isPlaying();
+            buttons[1].dwMask = THB_FLAGS | THB_TOOLTIP | THB_ICON;
             buttons[1].iId = thumbPlayPause;
             buttons[1].dwFlags = THBF_ENABLED;
-            wcscpy_s(buttons[1].szTip, L"Play / Pause");
+            buttons[1].hIcon = playing ? hIconPause : hIconPlay;
+            wcscpy_s(buttons[1].szTip, playing ? L"Pause" : L"Play");
 
-            buttons[2].dwMask = THB_FLAGS | THB_TOOLTIP;
+            buttons[2].dwMask = THB_FLAGS | THB_TOOLTIP | THB_ICON;
             buttons[2].iId = thumbNext;
             buttons[2].dwFlags = THBF_ENABLED;
+            buttons[2].hIcon = hIconNext;
             wcscpy_s(buttons[2].szTip, L"Next");
 
             taskbarList->ThumbBarAddButtons(hwnd, 3, buttons);
@@ -181,6 +294,16 @@ public:
         {
             if (hwnd != nullptr)
                 RemoveWindowSubclass(hwnd, taskbarSubclassProc, taskbarSubclassId);
+
+            if (hIconPrev) DestroyIcon(hIconPrev);
+            if (hIconPlay) DestroyIcon(hIconPlay);
+            if (hIconPause) DestroyIcon(hIconPause);
+            if (hIconNext) DestroyIcon(hIconNext);
+
+            hIconPrev = nullptr;
+            hIconPlay = nullptr;
+            hIconPause = nullptr;
+            hIconNext = nullptr;
 
             taskbarList.Reset();
             hwnd = nullptr;
@@ -205,10 +328,23 @@ public:
                     {
                         switch (LOWORD(wParam))
                         {
-                        case thumbPrev:      main->taskbarPrevious();  return 0;
-                        case thumbPlayPause: main->taskbarPlayPause(); return 0;
-                        case thumbNext:      main->taskbarNext();      return 0;
-                        default: break;
+                        case thumbPrev:
+                            main->taskbarPrevious();
+                            return 0;
+
+                        case thumbPlayPause:
+                        {
+                            bool playing = main->taskbarPlayPause();
+                            window->updateTaskbarPlayPauseButton(playing);
+                            return 0;
+                        }
+
+                        case thumbNext:
+                            main->taskbarNext();
+                            return 0;
+
+                        default:
+                            break;
                         }
                     }
                 }
@@ -216,8 +352,21 @@ public:
 
             return DefSubclassProc(hWnd, message, wParam, lParam);
         }
-#endif
 
+        void updateTaskbarPlayPauseButton(bool playing)
+        {
+            if (taskbarList == nullptr || hwnd == nullptr)
+                return;
+
+            THUMBBUTTON button = {};
+            button.dwMask = THB_ICON | THB_TOOLTIP;
+            button.iId = thumbPlayPause;
+            button.hIcon = playing ? hIconPause : hIconPlay;
+            wcscpy_s(button.szTip, playing ? L"Pause" : L"Play");
+
+            taskbarList->ThumbBarUpdateButtons(hwnd, 1, &button);
+        }
+#endif
         MainComponent* getMainComponent() const
         {
             return dynamic_cast<MainComponent*> (getContentComponent());

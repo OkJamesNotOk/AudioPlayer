@@ -35,31 +35,37 @@ void AudioLoopDisplay::paint (juce::Graphics& g)
     g.fillAll (juce::Colours::transparentBlack);   // clear the background
 
     g.setColour (juce::Colours::grey);
-    g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
+    //g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
 
     g.setColour (juce::Colours::white);
     g.setFont (juce::FontOptions (14.0f));
+
+    auto area = getLocalBounds().reduced(5);
+    auto drawX = (float)area.getX();
+    auto drawY = (float)area.getY();
+    auto drawHeight = (float)area.getHeight();
+    auto drawWidth = (float)area.getWidth();
 
     if (loopMarkerStart > 0) {
         // Draw start point of the loop in red
         g.setColour(juce::Colours::red);
 
         // draw a thin vertical line
-        float lineWidth = juce::jmax(1.0f, getWidth() / 250.0f / 2);
-        float x = (float)loopMarkerStart * getWidth();
-        g.fillRect(x - lineWidth / 2.0f, 0.0f, lineWidth, (float)getHeight());
+        float lineWidth = juce::jmax(1.0f, drawWidth / 250.0f / 2);
+        float x = drawX + (float)loopMarkerStart * drawWidth;
+        g.fillRect(x - lineWidth / 2.0f, drawY, lineWidth, drawHeight);
 
         // Draw triangles to increase visibility of the marker
         juce::Path path;
         path.addTriangle(
-            loopMarkerStart * getWidth() - getWidth() / 45 / 2, 0,
-            loopMarkerStart * getWidth() + getWidth() / 45 / 2, 0,
-            loopMarkerStart * getWidth(), 10
+            x - drawWidth / 45.0f / 2.0f, drawY,
+            x + drawWidth / 45.0f / 2.0f, drawY,
+            x, drawY + 10.0f
         );
         path.addTriangle(
-            loopMarkerStart * getWidth() - getWidth() / 45 / 2, getHeight(),
-            loopMarkerStart * getWidth() + getWidth() / 45 / 2, getHeight(),
-            loopMarkerStart * getWidth(), getHeight() - 10
+            x - drawWidth / 45.0f / 2.0f, drawY + drawHeight,
+            x + drawWidth / 45.0f / 2.0f, drawY + drawHeight,
+            x, drawY + drawHeight - 10.0f
         );
         g.fillPath(path);
     }
@@ -68,21 +74,21 @@ void AudioLoopDisplay::paint (juce::Graphics& g)
         g.setColour(juce::Colours::darkblue);
 
         // draw a thin vertical line to indicate the end point of the loop 
-        float lineWidth = juce::jmax(1.0f, getWidth() / 250.0f / 2);
-        float x = (float)loopMarkerEnd * getWidth();
-        g.fillRect(x - lineWidth / 2.0f, 0.0f, lineWidth, (float)getHeight());
+        float lineWidth = juce::jmax(1.0f, drawWidth / 250.0f / 2);
+        float x = drawX + (float)loopMarkerEnd * drawWidth;
+        g.fillRect(x - lineWidth / 2.0f, drawY, lineWidth, drawHeight);
 
         // Added triangles to increase visibility of the end point marker
         juce::Path path;
         path.addTriangle(
-            loopMarkerEnd * getWidth() - getWidth() / 45 / 2, 0,
-            loopMarkerEnd * getWidth() + getWidth() / 45 / 2, 0,
-            loopMarkerEnd * getWidth(), 10
+            x - drawWidth / 45.0f / 2.0f, drawY,
+            x + drawWidth / 45.0f / 2.0f, drawY,
+            x, drawY + 10.0f
         );
         path.addTriangle(
-            loopMarkerEnd * getWidth() - getWidth() / 45 / 2, getHeight(),
-            loopMarkerEnd * getWidth() + getWidth() / 45 / 2, getHeight(),
-            loopMarkerEnd * getWidth(), getHeight() - 10
+            x - drawWidth / 45.0f / 2.0f, drawY + drawHeight,
+            x + drawWidth / 45.0f / 2.0f, drawY + drawHeight,
+            x, drawY + drawHeight - 10.0f
         );
         g.fillPath(path);
     }

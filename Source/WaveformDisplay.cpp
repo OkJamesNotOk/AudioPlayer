@@ -34,7 +34,10 @@ void WaveformDisplay::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::darkgrey);
 
-    auto bounds = getLocalBounds().toFloat();
+    auto drawArea = getLocalBounds().withTrimmedLeft(5)
+        .withTrimmedRight(5)
+        .withTrimmedBottom(5);
+    auto bounds = drawArea.toFloat();
 
     g.setColour(juce::Colours::grey);
     g.drawRect(bounds, 1.0f);
@@ -42,14 +45,15 @@ void WaveformDisplay::paint(juce::Graphics& g)
     if (fileLoaded)
     {
         g.setColour(juce::Colours::orange);
-        audioThumb.drawChannel(g, getLocalBounds(), 0, audioThumb.getTotalLength(), 0, 1.0f);
+        audioThumb.drawChannel(g, drawArea, 0.0, audioThumb.getTotalLength(), 0, 1.0f);
 
-        float x = bounds.getX() + (float)position * (bounds.getWidth() - 1.0f);
+        float x = bounds.getX() + (float)position * bounds.getWidth();
+        x = juce::jlimit(bounds.getX(), bounds.getRight(), x);
 
         g.setColour(juce::Colours::purple);
 
         float lineWidth = juce::jmax(1.0f, getWidth() / 250.0f / 2);
-        g.fillRect(x - lineWidth / 2.0f, 0.0f, lineWidth, (float)getHeight());
+        g.fillRect(x - lineWidth / 2.0f, bounds.getY(), lineWidth, bounds.getHeight());
 
         juce::Path path;
         float markerHalfWidth = bounds.getWidth() / 90.0f;
@@ -109,5 +113,4 @@ void WaveformDisplay::resized()
 {
     // This method is where you should set the bounds of any child
     // components that your component contains..
-
 }

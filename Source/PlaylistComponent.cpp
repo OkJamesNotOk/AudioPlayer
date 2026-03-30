@@ -16,11 +16,11 @@ PlaylistComponent::PlaylistComponent()
 {
     tableComponent.getHeader().addColumn("Track Title", 1, 200, 80, -1, juce::TableHeaderComponent::defaultFlags);
     tableComponent.getHeader().addColumn("Duration", 2, 80, minDurationColW, -1, juce::TableHeaderComponent::defaultFlags);
-    tableComponent.getHeader().addColumn("Up", 3, 60, minOrderColW, -1, juce::TableHeaderComponent::defaultFlags);
-    tableComponent.getHeader().addColumn("Dn", 4, 60, minOrderColW, -1, juce::TableHeaderComponent::defaultFlags);
-    tableComponent.getHeader().addColumn("", 5, 100, minColW, -1, juce::TableHeaderComponent::defaultFlags);
+    tableComponent.getHeader().addColumn("Move", 3, 60, minOrderColW, -1, juce::TableHeaderComponent::defaultFlags);
+    tableComponent.getHeader().addColumn("Del", 4, 100, minDelColW, -1, juce::TableHeaderComponent::defaultFlags);
 
     tableComponent.setModel(this);
+    tableComponent.setRowHeight(32);
     tableComponent.setColour(juce::TableListBox::backgroundColourId, juce::Colour::fromString("#FF444444"));
 
     tableComponent.setInterceptsMouseClicks(false, true);
@@ -54,7 +54,26 @@ PlaylistComponent::PlaylistComponent()
     clearPlaylist.setColour(juce::TextButton::buttonColourId, juce::Colour::fromString("#FF960404"));
     clearPlaylist.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
 
+    auto trashImage = ImageHelpers::loadPngFromBinaryData(
+        BinaryData::trashsolid2_png,
+        BinaryData::trashsolid2_pngSize
+    );
+    trashDrawable = ImageHelpers::makeDrawableFromImage(trashImage);
+
+    auto downImage = ImageHelpers::loadPngFromBinaryData(
+        BinaryData::navarrowdownsolid2_png,
+        BinaryData::navarrowdownsolid2_pngSize
+    );
+    downDrawable = ImageHelpers::makeDrawableFromImage(downImage);
+
+    auto upImage = ImageHelpers::loadPngFromBinaryData(
+        BinaryData::navarrowupsolid2_png,
+        BinaryData::navarrowupsolid2_pngSize
+    );
+    upDrawable = ImageHelpers::makeDrawableFromImage(upImage);
+
     loadPlaylist();
+
 }
 
 int PlaylistComponent::getNumRows() {
@@ -82,14 +101,15 @@ void PlaylistComponent::paintRowBackground(Graphics& g, int rowNumber, int width
 void PlaylistComponent::setCurrentPlayingFile(const juce::File& file)
 {
     currentPlayingFile = file;
+    tableComponent.updateContent();
     tableComponent.repaint();
 }
 
 void PlaylistComponent::paintCell(Graphics& g, int rowNumber, int columnId, int width, int height, bool rowIsSelected) {
-    if(columnId ==1){
-        g.setColour(juce::Colour::fromString("#FF457B9D"));
-        g.drawText(filteredTrackTitles[rowNumber].getFileName(), 2, 0, width - 4, height, Justification::centredLeft, true);
-    }
+    //if(columnId ==1){
+    //    g.setColour(juce::Colour::fromString("#FF457B9D"));
+    //    g.drawText(filteredTrackTitles[rowNumber].getFileName(), 2, 0, width - 4, height, Justification::centredLeft, true);
+    //}
 }
 
 PlaylistComponent::~PlaylistComponent()
@@ -103,15 +123,9 @@ void PlaylistComponent::paint (juce::Graphics& g)
 
     g.setColour (juce::Colours::grey);
     g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-
-    g.setColour (juce::Colours::white);
-    g.setFont (juce::FontOptions (14.0f));
-    g.drawText ("PlaylistComponent", getLocalBounds(),
-                juce::Justification::centred, true);   // draw some placeholder text
 }
 
-void PlaylistComponent::resized()
-{
+void PlaylistComponent::resized() {
     auto area = getLocalBounds().reduced(4);
 
     const int topHeight = getHeight() / 12;
@@ -145,17 +159,39 @@ void PlaylistComponent::resized()
     const int segment = 20;    
 
     const int colW = juce::jmax((tableWidth / segment), minDurationColW);
-    const int colWhalf = juce::jmax((colW / 2), minOrderColW);
-    const int titleWidth = juce::jmax(50, tableWidth - colW * 2 - colWhalf * 2);
+    const int colMove = juce::jmax(colW / 2, minOrderColW);
+    const int colDel = juce::jmax((colW / 2), minDelColW);
+    const int titleWidth = juce::jmax(50, tableWidth - colW - colMove - colDel);
 
     tableComponent.getHeader().setColumnWidth(1, titleWidth);
     tableComponent.getHeader().setColumnWidth(2, colW);
-    tableComponent.getHeader().setColumnWidth(3, colWhalf);
-    tableComponent.getHeader().setColumnWidth(4, colWhalf);
-    tableComponent.getHeader().setColumnWidth(5, colW);
+    tableComponent.getHeader().setColumnWidth(3, colMove);
+    tableComponent.getHeader().setColumnWidth(4, colDel);
 }
 
 Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int columnId, bool isRowSelected, Component* existingComponentToUpdate) {
+    if (rowNumber < 0 || rowNumber >= (int)filteredTrackTitles.size())
+        return nullptr;
+    if (columnId == 1)
+    {
+        auto* titleLabel = dynamic_cast<ScrollLabel*>(existingComponentToUpdate);
+
+        if (titleLabel == nullptr)
+        {
+            titleLabel = new ScrollLabel();
+            titleLabel->setInterceptsMouseClicks(false, false);
+            titleLabel->setColour(juce::Label::textColourId, juce::Colour::fromString("#FF457B9D"));
+            titleLabel->setJustificationType(juce::Justification::centredLeft);
+            titleLabel->setBorderSize(juce::BorderSize<int>(0, 2, 0, 2));
+            titleLabel->setFont(juce::Font(14.0f));
+            existingComponentToUpdate = titleLabel;
+        }
+
+        bool shouldScroll = isRowSelected;
+        titleLabel->setText(filteredTrackTitles[rowNumber].getFileName(), juce::dontSendNotification);
+        titleLabel->setScrollingEnabled(shouldScroll);
+        return existingComponentToUpdate;
+    }
     if (columnId == 2) {
         juce::Label* durationLabel = dynamic_cast<juce::Label*>(existingComponentToUpdate);
         if (existingComponentToUpdate == nullptr) {
@@ -184,39 +220,25 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int columnI
             durationLabel->setText(durationText, juce::NotificationType::dontSendNotification);
         }
     }
-    if (columnId == 3) {
-        auto* upBtn = dynamic_cast<juce::TextButton*>(existingComponentToUpdate);
-        if (existingComponentToUpdate == nullptr) {
-            upBtn = new juce::TextButton("/\\");
-            upBtn->addListener(this);
-            upBtn->setColour(juce::TextButton::buttonColourId, juce::Colour::fromString("#FFFFBE48"));
-            upBtn->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
-            existingComponentToUpdate = upBtn;
+    if (columnId == 3)
+    {
+        auto* moveComp = dynamic_cast<MoveButtonsComponent*>(existingComponentToUpdate);
+
+        if (moveComp == nullptr)
+        {
+            moveComp = new MoveButtonsComponent(*this, upDrawable.get(), downDrawable.get());
+            existingComponentToUpdate = moveComp;
         }
 
-        // append full path name to ID because they are all unique
-        upBtn->setComponentID("Up:" + filteredTrackTitles[rowNumber].getFullPathName());
+        moveComp->setRowFile(filteredTrackTitles[rowNumber]);
     }
     if (columnId == 4) {
-        auto* downBtn = dynamic_cast<juce::TextButton*>(existingComponentToUpdate);
-        if (existingComponentToUpdate == nullptr) {
-            downBtn = new juce::TextButton("\\/");
-            downBtn->addListener(this);
-            downBtn->setColour(juce::TextButton::buttonColourId, juce::Colour::fromString("#FFFFBE48"));
-            downBtn->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
-            existingComponentToUpdate = downBtn;
-        }
-
-        // append full path name to ID because they are all unique
-        downBtn->setComponentID("Down:" + filteredTrackTitles[rowNumber].getFullPathName());
-    }
-    if (columnId == 5) {
-        auto* deleteBtn = dynamic_cast<juce::TextButton*>(existingComponentToUpdate);
-        if (existingComponentToUpdate == nullptr) {
-            deleteBtn = new TextButton("Delete");
+        auto* deleteBtn = dynamic_cast<juce::DrawableButton*>(existingComponentToUpdate);
+        if (existingComponentToUpdate == nullptr)
+        {
+            deleteBtn = new juce::DrawableButton("Delete", juce::DrawableButton::ImageOnButtonBackground);
+            deleteBtn->setImages(trashDrawable.get());
             deleteBtn->addListener(this);
-            deleteBtn->setColour(juce::TextButton::buttonColourId, juce::Colour::fromString("#FFAFAFDC"));
-            deleteBtn->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
             existingComponentToUpdate = deleteBtn;
         }
         // using full path name as ID because they are all unique
@@ -546,9 +568,27 @@ bool PlaylistComponent::checkFileDuplicate(const File& file) {
 }
 
 void PlaylistComponent::listBoxItemClicked(int row, const MouseEvent& e) {
-    if (row >= 0 && row < filteredTrackTitles.size()) {
-        tableComponent.selectRow(row);
+    //if (row >= 0 && row < filteredTrackTitles.size()) {
+    //    tableComponent.selectRow(row);
+    //}
+}
+
+void PlaylistComponent::cellClicked(int rowNumber, int columnId, const juce::MouseEvent&) {
+    if (rowNumber < 0 || rowNumber >= filteredTrackTitles.size())
+        return;
+
+    if (currentRow == rowNumber)
+    {
+        tableComponent.deselectAllRows();
+        currentRow = -1;
     }
+    else
+    {
+        tableComponent.selectRow(rowNumber);
+        currentRow = rowNumber;
+    }
+
+    tableComponent.repaint();
 }
 
 var PlaylistComponent::getDragSourceDescription(const SparseSet<int>& selectedRow) {

@@ -1,7 +1,9 @@
 /*
   ==============================================================================
 
-    This file was auto-generated!
+    CustomLookAndFeelButton.cpp
+    Created: 27 Mar 2026 2:51:06am
+    Author:  OkJames
 
   ==============================================================================
 */
@@ -12,13 +14,19 @@
 #include "DJAudioPlayer.h"
 #include "PlaylistComponent.h"
 #include "PlaylistLooper.h"
+#include "PlaylistWindow.h"
+#include "SettingsWindow.h"
+#include "ImageHelper.h"
 
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent : public AudioAppComponent
+
+
+class MainComponent : 
+    public AudioAppComponent
 {
 public:
     //==============================================================================
@@ -34,10 +42,18 @@ public:
     void paint(Graphics& g) override;
     void resized() override;
 
-    void taskbarPlayPause();
+    bool taskbarPlayPause();
     void taskbarPrevious();
     void taskbarNext();
+    bool isPlaying() const;
 
+    std::function<void(bool)> onPlaybackStateChanged;
+
+    void openPlaylist();
+    void openSettings();
+
+    void settingsManagement(const juce::String& key, bool value);
+    void updatePlaylistPresentation();
 private:
 
     AudioFormatManager formatManager;
@@ -48,6 +64,26 @@ private:
     PlaylistComponent playlistComponent;
     DJAudioPlayer looperPlayer{ formatManager };
     PlaylistLooper playlistLooper{ &looperPlayer, formatManager, thumbCache, playlistComponent };
+
+    juce::DrawableButton settingsButton{ "SettingsButton", juce::DrawableButton::ImageOnButtonBackground };
+    juce::DrawableButton playlistButton{ "PlaylistButton", juce::DrawableButton::ImageOnButtonBackground };
+    std::vector<juce::DrawableButton*> topBarButtons
+    {
+        &settingsButton,
+        &playlistButton
+    };
+
+    std::unique_ptr<PlaylistWindow> playlistWindow;
+
+    SettingsComponent settingsComponent;
+    std::unique_ptr<SettingsWindow> settingsWindow;
+
+    bool internalPlaylistVisible = false;
+    int internalCollapsedWindowHeight = 0;
+
+    void updateInternalWindowSize();
+    int getInternalPlaylistHeight() const;
+    bool wouldInternalPlaylistExceedScreen() const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

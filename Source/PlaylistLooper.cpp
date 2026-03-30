@@ -11,6 +11,19 @@
 #include <JuceHeader.h>
 #include "PlaylistLooper.h"
 
+//static juce::Image loadPngFromBinaryData(const void* data, int size)
+//{
+//    juce::MemoryInputStream stream(data, static_cast<size_t>(size), false);
+//    return juce::PNGImageFormat::loadFrom(stream);
+//}
+//
+//static std::unique_ptr<juce::Drawable> makeDrawableFromImage(const juce::Image& image)
+//{
+//    auto drawable = std::make_unique<juce::DrawableImage>();
+//    drawable->setImage(image);
+//    return drawable;
+//}
+
 PlaylistLooper::PlaylistLooper(DJAudioPlayer* _player,
     AudioFormatManager& formatManagerToUse,
     AudioThumbnailCache& cacheToUse,
@@ -23,6 +36,7 @@ PlaylistLooper::PlaylistLooper(DJAudioPlayer* _player,
     initialiseSliders();
     addAndMakeVisible(songName);
     songName.setText("No File Loaded!", juce::dontSendNotification);
+    songName.setScrollingEnabled(true);
 
 
     addAndMakeVisible(waveformDisplay);
@@ -80,7 +94,7 @@ void PlaylistLooper::initialiseButtonGroups()
 
 void PlaylistLooper::initialiseButtons()
 {
-    std::vector<juce::TextButton*> allButtons =
+    std::vector<juce::Button*> allButtons =
     {
         &playButton, &prevButton, &nextButton,
         &loopButton, &loopStartButton, &loopEndButton
@@ -93,7 +107,16 @@ void PlaylistLooper::initialiseButtons()
         button->addListener(this);
     }
 
-    // Enable state change on click and change colour for each state
+    auto playImage = ImageHelpers::loadPngFromBinaryData(BinaryData::playsolid_png, BinaryData::playsolid_pngSize);
+    auto pauseImage = ImageHelpers::loadPngFromBinaryData(BinaryData::pausesolid_png, BinaryData::pausesolid_pngSize);
+    auto prevImage = ImageHelpers::loadPngFromBinaryData(BinaryData::skipprevsolid_png, BinaryData::skipprevsolid_pngSize);
+    auto nextImage = ImageHelpers::loadPngFromBinaryData(BinaryData::skipnextsolid_png, BinaryData::skipnextsolid_pngSize);
+
+    auto playDrawable = ImageHelpers::makeDrawableFromImage(playImage);
+    auto pauseDrawable = ImageHelpers::makeDrawableFromImage(pauseImage);
+    auto prevDrawable = ImageHelpers::makeDrawableFromImage(prevImage);
+    auto nextDrawable = ImageHelpers::makeDrawableFromImage(nextImage);
+
     playButton.setClickingTogglesState(true);
     playButton.setColour(juce::TextButton::buttonColourId, juce::Colour::fromString("#FFB48B9E"));
     playButton.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
@@ -105,8 +128,12 @@ void PlaylistLooper::initialiseButtons()
 
     nextButton.setColour(juce::TextButton::buttonColourId, juce::Colour::fromString("#FFFFBE48"));
     nextButton.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+    playButton.setImages(playDrawable.get(), nullptr, nullptr, nullptr,
+        pauseDrawable.get(), nullptr, nullptr, nullptr);
 
-    //enable state change and set colour, text colour for each state of the loop buttons
+    prevButton.setImages(prevDrawable.get());
+    nextButton.setImages(nextDrawable.get());
+
     for (auto* button : loopButtons)
     {
         button->setClickingTogglesState(true);
@@ -116,7 +143,6 @@ void PlaylistLooper::initialiseButtons()
         button->setColour(juce::TextButton::textColourOnId, juce::Colours::black);
     }
 }
-
 void PlaylistLooper::initialiseSliders()
 {
     std::vector<juce::Slider*> sliders = { &volSlider, &speedSlider, &posSlider };
@@ -124,37 +150,39 @@ void PlaylistLooper::initialiseSliders()
     for (auto* slider : sliders)
     {
         addAndMakeVisible(slider);
-        slider->setLookAndFeel(&customButton);
+        //slider->setLookAndFeel(&customButton);
         slider->addListener(this);
     }
+    posSlider.setLookAndFeel(&customButton);
 
     // Set range, initial value, and precision to the speed slider
     // Set velocity based mode on for better control in the change of speed
-    volSlider.setSliderStyle(juce::Slider::LinearBarVertical);
+    volSlider.setSliderStyle(juce::Slider::LinearVertical);
     // add mouse listener to change slider colour
     volSlider.addMouseListener(this, true);
     volSlider.setRange(0.0, 2.0);
     volSlider.setValue(0.7);
     volSlider.setNumDecimalPlacesToDisplay(3);
-    volSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 0, 0);
+    volSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 50);
     volSlider.setSliderSnapsToMousePosition(true);
     // Add description of what the slider is for before the slider value
     volSlider.textFromValueFunction = [](double value)
         {
-            return "Vol: \n" + juce::String(value, 3);
+            return juce::String(value, 2);
         };
 
+
     // Change speed slider for more surface area to click on
-    speedSlider.setSliderStyle(juce::Slider::LinearBarVertical);
+    speedSlider.setSliderStyle(juce::Slider::LinearVertical);
     speedSlider.setRange(0.1, 4.0);
     speedSlider.setValue(1.0);
     speedSlider.setNumDecimalPlacesToDisplay(3);
-    speedSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, true, 0, 0);
+    speedSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 50);
     speedSlider.setVelocityBasedMode(true);
     // Add description of what the slider is for before the slider value
     speedSlider.textFromValueFunction = [](double value)
         {
-            return "Spd: \n" + juce::String(value, 3);
+            return juce::String(value, 2) + "x";
         };
 
     // set range and precision for position slider
@@ -191,24 +219,19 @@ void PlaylistLooper::paint(juce::Graphics& g)
     g.fillAll(juce::Colours::darkgrey);
     g.setColour(juce::Colours::white);
     g.drawRect(getLocalBounds(), 1);   // draw an outline around the component
-
-    // change colour of the vol slider when mouse is lifted up
-    if (vUp) {
-        volSlider.setColour(juce::Slider::trackColourId, volColour);
-    }
 }
 
 void PlaylistLooper::resized()
 {
-    auto area = getLocalBounds();
+    auto area = getLocalBounds().reduced(1);
 
-    auto rightPanel = area.removeFromRight(area.getWidth() * 7 / 32);
+    auto rightPanel = area.removeFromRight(area.getWidth() * 10 / 32);
     auto leftPanel = area;
-    auto rowH = leftPanel.getHeight() / 8;
+    auto rowH = leftPanel.getHeight() / 9;
 
     // Song name display and position slider 
     songName.setBounds(leftPanel.removeFromTop(rowH));
-    posSlider.setBounds(leftPanel.removeFromTop(rowH));
+    posSlider.setBounds(leftPanel.removeFromTop(rowH).reduced(5, 0));
 
     // Waveform display 
     auto displayArea = leftPanel.removeFromTop(rowH * 4);
@@ -231,7 +254,7 @@ void PlaylistLooper::resized()
         const int row = i / buttonsPerRow;
         const int col = i % buttonsPerRow;
 
-        auto currentRowArea = buttonArea.withTrimmedTop(row * rowHeight).removeFromTop(rowHeight);
+        auto currentRowArea = buttonArea.withTrimmedTop(row * rowHeight).removeFromTop(rowHeight).reduced(5, 0);
 
         const int buttonsInThisRow = juce::jmin(buttonsPerRow, buttonCount - row * buttonsPerRow);
         const int buttonWidth = (buttonsInThisRow > 0) ? currentRowArea.getWidth() / buttonsInThisRow : 0;
@@ -245,6 +268,7 @@ void PlaylistLooper::resized()
     // Volume slider and speed slider
     auto sliderW = rightPanel.getWidth() / 2;
     volSlider.setBounds(rightPanel.removeFromLeft(sliderW));
+    rightPanel.removeFromLeft(2);
     speedSlider.setBounds(rightPanel);
 }
 
@@ -268,16 +292,7 @@ void PlaylistLooper::buttonClicked(Button* button)
 {
     if (button == &playButton)
     {
-        // Stop Button
-        if (!button->getToggleState()) {
-            player->stop();
-            button->setButtonText(">");
-        }
-        // Play button
-        if (button->getToggleState()) {
-            player->start();
-            button->setButtonText("| |");
-        }
+        setPlaybackState(playButton.getToggleState());
     }
     if (button == &prevButton)
     {
@@ -387,6 +402,11 @@ void PlaylistLooper::sliderValueChanged(Slider* slider)
     {
         double vol = slider->getValue();
         player->setGain(vol);
+
+        volSliderColour();
+        volSlider.setColour(juce::Slider::trackColourId, volColour);
+        volSlider.repaint();
+
         persistPlayerState();
     }
 
@@ -495,15 +515,10 @@ void PlaylistLooper::previewMarkers(const MouseEvent& e) {
 }
 
 void PlaylistLooper::mouseDown(const MouseEvent& e) {
-    if (volSlider.isMouseOver()) {
-        vUp = false;
-    }
+
 }
 
 void PlaylistLooper::mouseUp(const MouseEvent& e) {
-    volSliderColour();
-    vUp = true;
-
     if (e.eventComponent == &loopDisplay) {
         updateMarkers(e);
     }
@@ -537,11 +552,7 @@ void PlaylistLooper::filesDropped(const StringArray& files, int x, int y)
         // changed to File instead of URL, for proper unicode filename display
         scrollLabelTextSet(currentFile.getFileName());
 
-        if (autoplay)
-        {
-            playButton.setToggleState(false, juce::NotificationType::dontSendNotification);
-            playButton.triggerClick();
-        }
+        setPlaybackState(autoplay);
         persistPlayerState();
     }
 }
@@ -614,10 +625,7 @@ void PlaylistLooper::itemDropped(const SourceDetails& filename) {
         playlistComponent.setCurrentPlayingFile(currentFile);
         player->loadURL(URL{ file });
         waveformDisplay.loadURL(URL{ file });
-        if (autoplay) {
-            playButton.setToggleState(false, juce::NotificationType::dontSendNotification);
-            playButton.triggerClick();
-        }
+        setPlaybackState(autoplay);
         scrollLabelTextSet(String(file.getFileName()));
         persistPlayerState();
     }
@@ -700,9 +708,24 @@ void PlaylistLooper::restoreSavedState()
     }
 }
 
-void PlaylistLooper::taskbarPlayPause()
+bool PlaylistLooper::taskbarPlayPause()
 {
-    playButton.triggerClick();
+    return setPlaybackState(!playButton.getToggleState());
+}
+
+bool PlaylistLooper::setPlaybackState(bool shouldPlay)
+{
+    playButton.setToggleState(shouldPlay, juce::dontSendNotification);
+
+    if (shouldPlay)
+        player->start();
+    else
+        player->stop();
+
+    if (onPlaybackStateChanged)
+        onPlaybackStateChanged(shouldPlay);
+
+    return shouldPlay;
 }
 
 void PlaylistLooper::taskbarPrevious()
@@ -713,4 +736,14 @@ void PlaylistLooper::taskbarPrevious()
 void PlaylistLooper::taskbarNext()
 {
     nextButton.triggerClick();
+}
+
+bool PlaylistLooper::isPlaying() const
+{
+    return playButton.getToggleState();
+}
+
+void PlaylistLooper::setAutoPlayEnabled(bool enabled)
+{
+    autoplay = enabled;
 }

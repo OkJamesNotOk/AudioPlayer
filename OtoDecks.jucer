@@ -4,6 +4,32 @@
               jucerFormatVersion="1">
   <MAINGROUP id="mcJZqF" name="AudioPlaylist">
     <GROUP id="{356C603F-01E1-55B2-02A0-F2D89D9A59E6}" name="Source">
+      <FILE id="aL2T8w" name="settings.png" compile="0" resource="1" file="Source/icons/settings.png"/>
+      <FILE id="Is8D1t" name="settings2.png" compile="0" resource="1" file="Source/icons/settings2.png"/>
+      <FILE id="wHy9Em" name="settings3.png" compile="0" resource="1" file="Source/icons/settings3.png"/>
+      <FILE id="y7BDsK" name="PlaylistWindow.cpp" compile="1" resource="0"
+            file="Source/PlaylistWindow.cpp"/>
+      <FILE id="KnhkH6" name="PlaylistWindow.h" compile="0" resource="0"
+            file="Source/PlaylistWindow.h"/>
+      <FILE id="B1VaSl" name="MoveButtonsComponent.cpp" compile="1" resource="0"
+            file="Source/MoveButtonsComponent.cpp"/>
+      <FILE id="AK23W4" name="MoveButtonsComponent.h" compile="0" resource="0"
+            file="Source/MoveButtonsComponent.h"/>
+      <FILE id="W1PXgS" name="nav-arrow-down-solid2.png" compile="0" resource="1"
+            file="Source/icons/nav-arrow-down-solid2.png"/>
+      <FILE id="GW8g7W" name="nav-arrow-up-solid2.png" compile="0" resource="1"
+            file="Source/icons/nav-arrow-up-solid2.png"/>
+      <FILE id="aC6OIH" name="pause-solid2.png" compile="0" resource="1"
+            file="Source/icons/pause-solid2.png"/>
+      <FILE id="DIG0he" name="play-solid2.png" compile="0" resource="1" file="Source/icons/play-solid2.png"/>
+      <FILE id="lUjg11" name="skip-next-solid2.png" compile="0" resource="1"
+            file="Source/icons/skip-next-solid2.png"/>
+      <FILE id="oZtLGZ" name="skip-prev-solid2.png" compile="0" resource="1"
+            file="Source/icons/skip-prev-solid2.png"/>
+      <FILE id="KvE5Jh" name="trash-solid2.png" compile="0" resource="1"
+            file="Source/icons/trash-solid2.png"/>
+      <FILE id="gfZmId" name="ImageHelper.cpp" compile="1" resource="0" file="Source/ImageHelper.cpp"/>
+      <FILE id="j213JB" name="ImageHelper.h" compile="0" resource="0" file="Source/ImageHelper.h"/>
       <FILE id="qTg1U8" name="AudioLoopDisplay.cpp" compile="1" resource="0"
             file="Source/AudioLoopDisplay.cpp"/>
       <FILE id="UT2BWi" name="AudioLoopDisplay.h" compile="0" resource="0"
@@ -19,6 +45,9 @@
       <FILE id="Sqoy0H" name="MainComponent.cpp" compile="1" resource="0"
             file="Source/MainComponent.cpp"/>
       <FILE id="MKFRGm" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
+      <FILE id="hptE8j" name="pause-circle.ico" compile="0" resource="1"
+            file="Source/icons/pause-circle.ico"/>
+      <FILE id="ZgN7JK" name="play-circle.ico" compile="0" resource="1" file="Source/icons/play-circle.ico"/>
       <FILE id="Db4hxg" name="PlaylistComponent.cpp" compile="1" resource="0"
             file="Source/PlaylistComponent.cpp"/>
       <FILE id="NCXl6o" name="PlaylistComponent.h" compile="0" resource="0"
@@ -29,10 +58,33 @@
             file="Source/PlaylistLooper.h"/>
       <FILE id="f7AEhb" name="ScrollLabel.cpp" compile="1" resource="0" file="Source/ScrollLabel.cpp"/>
       <FILE id="P5KUJa" name="ScrollLabel.h" compile="0" resource="0" file="Source/ScrollLabel.h"/>
+      <FILE id="EJI4tS" name="skip-back-circle.ico" compile="0" resource="1"
+            file="Source/icons/skip-back-circle.ico"/>
+      <FILE id="Q2qvJv" name="skip-forward-circle.ico" compile="0" resource="1"
+            file="Source/icons/skip-forward-circle.ico"/>
       <FILE id="sZKpQg" name="WaveformDisplay.cpp" compile="1" resource="0"
             file="Source/WaveformDisplay.cpp"/>
       <FILE id="AD5crb" name="WaveformDisplay.h" compile="0" resource="0"
             file="Source/WaveformDisplay.h"/>
+      <FILE id="EKvpbL" name="pause-solid.png" compile="0" resource="1" file="Source/icons/pause-solid.png"/>
+      <FILE id="LhH2If" name="play-solid.png" compile="0" resource="1" file="Source/icons/play-solid.png"/>
+      <FILE id="YGXZZW" name="playlist-plus.png" compile="0" resource="1"
+            file="Source/icons/playlist-plus.png"/>
+      <FILE id="GO2yOE" name="repeat-once.png" compile="0" resource="1" file="Source/icons/repeat-once.png"/>
+      <FILE id="s1uGEh" name="repeat.png" compile="0" resource="1" file="Source/icons/repeat.png"/>
+      <FILE id="scXp0h" name="skip-next-solid.png" compile="0" resource="1"
+            file="Source/icons/skip-next-solid.png"/>
+      <FILE id="roNas9" name="skip-prev-solid.png" compile="0" resource="1"
+            file="Source/icons/skip-prev-solid.png"/>
+      <FILE id="RHpxOq" name="trash-solid.png" compile="0" resource="1" file="Source/icons/trash-solid.png"/>
+      <FILE id="mlo8Wy" name="SettingsComponent.cpp" compile="1" resource="0"
+            file="Source/SettingsComponent.cpp"/>
+      <FILE id="aw8bgs" name="SettingsComponent.h" compile="0" resource="0"
+            file="Source/SettingsComponent.h"/>
+      <FILE id="tEdH2B" name="SettingsWindow.cpp" compile="1" resource="0"
+            file="Source/SettingsWindow.cpp"/>
+      <FILE id="gpZt4t" name="SettingsWindow.h" compile="0" resource="0"
+            file="Source/SettingsWindow.h"/>
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>

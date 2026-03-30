@@ -20,6 +20,7 @@ public:
 
     // Write text onto the label
     void setText(const juce::String& str, juce::NotificationType notif);
+    void setScrollingEnabled(bool shouldScroll);
 
     void paint(juce::Graphics& g) override;
 private:
@@ -27,5 +28,6 @@ private:
     int width = 0;
     // distance travelled by text
     int distTravelled = 0;
+    bool scrollingEnabled = false;
     void timerCallback() override;
 };

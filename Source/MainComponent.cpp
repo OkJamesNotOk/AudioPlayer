@@ -1,7 +1,9 @@
 /*
   ==============================================================================
 
-    This file was auto-generated!
+    CustomLookAndFeelButton.cpp
+    Created: 27 Mar 2026 2:51:06am
+    Author:  OkJames
 
   ==============================================================================
 */
@@ -28,12 +30,49 @@ MainComponent::MainComponent()
         setAudioChannels(0, 2);
     }
 
-
     addAndMakeVisible(playlistComponent);
     addAndMakeVisible(playlistLooper);
 
+    for (auto* button : topBarButtons)
+        addAndMakeVisible(button);
+
+    settingsButton.onClick = [this]()
+        {
+            openSettings();
+        };
+
+    playlistButton.onClick = [this]()
+        {
+            openPlaylist();
+        };
+    auto playlistImage = ImageHelpers::loadPngFromBinaryData(BinaryData::playlistplus_png, BinaryData::playlistplus_pngSize);
+    auto playlistDrawable = ImageHelpers::makeDrawableFromImage(playlistImage);
+    playlistButton.setImages(playlistDrawable.get());
+
+    auto settingImage = ImageHelpers::loadPngFromBinaryData(BinaryData::settings3_png, BinaryData::settings3_pngSize);
+    auto settingDrawable = ImageHelpers::makeDrawableFromImage(settingImage);
+    settingsButton.setImages(settingDrawable.get());
+
+    settingsButton.setTooltip("Settings");
+    playlistButton.setTooltip("Playlist");
+
     formatManager.registerBasicFormats();
+
+    playlistLooper.setAutoPlayEnabled(settingsComponent.getSettingValue("autoPlay"));
+    settingsComponent.onSettingChanged = [this](const juce::String& key, bool value)
+        {
+            settingsManagement(key, value);
+        };
+
     playlistLooper.restoreSavedState();
+
+    playlistLooper.onPlaybackStateChanged = [this](bool playing)
+        {
+            if (onPlaybackStateChanged)
+                onPlaybackStateChanged(playing);
+        };
+
+    updatePlaylistPresentation();
 }
 
 MainComponent::~MainComponent()
@@ -61,42 +100,310 @@ void MainComponent::releaseResources() {
 //==============================================================================
 void MainComponent::paint(Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
+    g.setColour(juce::Colours::grey);
+    g.drawRect(getLocalBounds(), 1);
+}
 
-    // You can add your drawing code here!
+int MainComponent::getInternalPlaylistHeight() const
+{
+    auto area = getLocalBounds().reduced(5);
 
-    g.setColour(Colours::white);
-    g.setFont(14.0f);
-    g.drawText("PlaylistComponent", getLocalBounds(), Justification::centred, true);
+    const int gap = 5;
+    const int topBarH = 40;
+
+    area.removeFromTop(topBarH);
+    area.removeFromTop(gap);
+
+    const int availableHeight = area.getHeight();
+
+    return juce::jlimit(300, 500, availableHeight / 2);
+}
+
+void MainComponent::updateInternalWindowSize()
+{
+    if (settingsComponent.getSettingValue("playlistWin"))
+        return;
+
+    if (auto* window = findParentComponentOfClass<juce::DocumentWindow>())
+    {
+        auto bounds = window->getBounds();
+
+        if (internalPlaylistVisible)
+        {
+            if (internalCollapsedWindowHeight <= 0)
+                internalCollapsedWindowHeight = bounds.getHeight();
+
+            const int targetHeight = internalCollapsedWindowHeight + getInternalPlaylistHeight() + 5;
+            window->setSize(bounds.getWidth(), targetHeight);
+        }
+        else
+        {
+            if (internalCollapsedWindowHeight > 0)
+                window->setSize(bounds.getWidth(), internalCollapsedWindowHeight);
+        }
+    }
 }
 
 void MainComponent::resized()
 {
-    juce::FlexBox flexBox;
-    flexBox.flexDirection = juce::FlexBox::Direction::column;
-    flexBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
-    flexBox.alignItems = juce::FlexBox::AlignItems::stretch;
+    auto area = getLocalBounds().reduced(5);
+    const int gap = 5;
+    const int topBarH = 40;
 
-    flexBox.items.add(juce::FlexItem(playlistComponent).withFlex(0.7f));
+    auto topBar = area.removeFromTop(topBarH);
 
-    flexBox.items.add(juce::FlexItem(playlistLooper).withFlex(0.3f));
-    flexBox.performLayout(getLocalBounds());
+    const int buttonCount = static_cast<int>(topBarButtons.size());
+    const int totalGapSpace = gap * (buttonCount - 1);
+    const int availableWidth = topBar.getWidth() - totalGapSpace;
+    const int buttonSize = availableWidth / buttonCount;
+
+    for (int i = 0; i < buttonCount; ++i)
+    {
+        topBarButtons[i]->setBounds(topBar.removeFromLeft(buttonSize));
+        if (i < buttonCount - 1)
+            topBar.removeFromLeft(gap);
+    }
+
+    area.removeFromTop(gap);
+
+    const bool isExternal = settingsComponent.getSettingValue("playlistWin");
+
+    if (isExternal)
+    {
+        playlistLooper.setBounds(area);
+        playlistLooper.setVisible(true);
+
+        if (playlistComponent.getParentComponent() == this)
+            playlistComponent.setVisible(false);
+
+        return;
+    }
+
+    if (playlistComponent.getParentComponent() == this && internalPlaylistVisible)
+    {
+        const int playlistHeight = getInternalPlaylistHeight();
+
+        auto playlistArea = area.removeFromBottom(playlistHeight);
+        area.removeFromBottom(gap);
+
+        playlistLooper.setBounds(area);
+        playlistLooper.setVisible(true);
+
+        playlistComponent.setBounds(playlistArea);
+        playlistComponent.setVisible(true);
+    }
+    else
+    {
+        playlistLooper.setBounds(area);
+        playlistLooper.setVisible(true);
+
+        if (playlistComponent.getParentComponent() == this)
+            playlistComponent.setVisible(false);
+    }
 }
 
-void MainComponent::taskbarPlayPause()
-{
-    playlistLooper.taskbarPlayPause();
+bool MainComponent::taskbarPlayPause() {
+    return playlistLooper.taskbarPlayPause();
 }
 
-void MainComponent::taskbarPrevious()
-{
+void MainComponent::taskbarPrevious() {
     playlistLooper.taskbarPrevious();
 }
 
-void MainComponent::taskbarNext()
-{
+void MainComponent::taskbarNext() {
     playlistLooper.taskbarNext();
 }
 
+bool MainComponent::isPlaying() const
+{
+    return playlistLooper.isPlaying();
+}
 
+void MainComponent::openPlaylist()
+{
+    if (!settingsComponent.getSettingValue("playlistWin") && !internalPlaylistVisible)
+    {
+        if (auto* window = findParentComponentOfClass<juce::DocumentWindow>())
+            internalCollapsedWindowHeight = window->getHeight();
+
+        if (wouldInternalPlaylistExceedScreen())
+            settingsComponent.setSettingValue("playlistWin", true);
+    }
+
+    const bool isExternal = settingsComponent.getSettingValue("playlistWin");
+
+    if (isExternal)
+    {
+        if (playlistWindow == nullptr)
+        {
+            juce::Logger::writeToLog("openPlaylist: playlistWindow was null, creating it");
+            playlistWindow = std::make_unique<PlaylistWindow>(playlistComponent);
+        }
+
+        const bool shouldShow = !playlistWindow->isVisible();
+        juce::Logger::writeToLog("openPlaylist: external mode, shouldShow=" + juce::String(shouldShow ? "true" : "false"));
+
+        if (shouldShow)
+        {
+            if (auto* mainWindow = findParentComponentOfClass<juce::DocumentWindow>())
+            {
+                auto mainBounds = mainWindow->getBounds();
+                const int gap = 10;
+                playlistWindow->setTopLeftPosition(mainBounds.getRight() + gap, mainBounds.getY());
+            }
+
+            playlistComponent.setVisible(true);
+            playlistWindow->setVisible(true);
+            playlistWindow->toFront(true);
+        }
+        else
+        {
+            playlistWindow->setVisible(false);
+        }
+        return;
+    }
+
+    if (!internalPlaylistVisible)
+    {
+        if (auto* window = findParentComponentOfClass<juce::DocumentWindow>())
+            internalCollapsedWindowHeight = window->getHeight();
+    }
+
+    internalPlaylistVisible = !internalPlaylistVisible;
+    updateInternalWindowSize();
+    resized();
+    repaint();
+}
+
+void MainComponent::openSettings()
+{
+    if (settingsWindow == nullptr)
+        settingsWindow = std::make_unique<SettingsWindow>(settingsComponent);
+
+    if (auto* mainWindow = findParentComponentOfClass<juce::DocumentWindow>())
+    {
+        auto mainBounds = mainWindow->getBounds();
+
+        int gap = 10;
+        int newX = mainBounds.getX() - settingsWindow->getWidth() - gap;
+        int newY = mainBounds.getY();
+
+        settingsWindow->setTopLeftPosition(newX, newY);
+    }
+
+    settingsWindow->setVisible(true);
+    settingsWindow->toFront(true);
+}
+
+
+void MainComponent::settingsManagement(const juce::String& key, bool value)
+{
+    if (key == "autoPlay")
+    {
+        playlistLooper.setAutoPlayEnabled(value);
+    }
+    else if (key == "playlistWin")
+    {
+        if (auto* window = findParentComponentOfClass<juce::DocumentWindow>())
+        {
+            if (!value)
+            {
+                internalCollapsedWindowHeight = window->getHeight();
+            }
+            else if (internalPlaylistVisible && internalCollapsedWindowHeight > 0)
+            {
+                window->setSize(window->getWidth(), internalCollapsedWindowHeight);
+            }
+        }
+
+        internalPlaylistVisible = false;
+        updatePlaylistPresentation();
+    }
+}
+
+namespace
+{
+    juce::String getComponentParentName(juce::Component* comp)
+    {
+        if (comp == nullptr)
+            return "nullptr";
+
+        if (dynamic_cast<MainComponent*>(comp) != nullptr)
+            return "MainComponent";
+
+        if (dynamic_cast<PlaylistWindow*>(comp) != nullptr)
+            return "PlaylistWindow";
+
+        return comp->getName().isNotEmpty() ? comp->getName() : "OtherComponent";
+    }
+}
+
+void MainComponent::updatePlaylistPresentation()
+{
+    const bool isExternal = settingsComponent.getSettingValue("playlistWin");
+
+    if (isExternal)
+    {
+        if (playlistComponent.getParentComponent() == this)
+        {
+            removeChildComponent(&playlistComponent);
+        }
+
+        if (playlistWindow != nullptr)
+        {
+            playlistWindow->setVisible(false);
+            playlistWindow.reset();
+        }
+        playlistWindow = std::make_unique<PlaylistWindow>(playlistComponent);
+
+        playlistComponent.setVisible(true);
+        playlistWindow->setVisible(false);
+    }
+    else
+    {
+        if (playlistWindow != nullptr)
+        {
+            playlistWindow->setVisible(false);
+            playlistWindow.reset();
+        }
+
+        if (playlistComponent.getParentComponent() != this)
+        {
+            addAndMakeVisible(playlistComponent);
+        }
+
+        playlistComponent.setVisible(internalPlaylistVisible);
+    }
+
+    resized();
+    repaint();
+}
+
+bool MainComponent::wouldInternalPlaylistExceedScreen() const
+{
+    if (settingsComponent.getSettingValue("playlistWin"))
+        return false;
+
+    auto* window = const_cast<MainComponent*>(this)
+        ->findParentComponentOfClass<juce::DocumentWindow>();
+
+    if (window == nullptr)
+        return false;
+
+    auto* display = juce::Desktop::getInstance()
+        .getDisplays()
+        .getDisplayForRect(window->getScreenBounds());
+
+    if (display == nullptr)
+        return false;
+
+    const int gap = 5;
+    const int baseHeight = (internalCollapsedWindowHeight > 0)
+        ? internalCollapsedWindowHeight
+        : window->getHeight();
+
+    const int targetHeight = baseHeight + getInternalPlaylistHeight() + gap;
+
+    return targetHeight > display->userArea.getHeight();
+}
