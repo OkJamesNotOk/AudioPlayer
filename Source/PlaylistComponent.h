@@ -134,5 +134,7 @@ private:
     int minOrderColW = 15;
     int minDelColW = 25;
 
+    juce::File getDataFile(const juce::String& fileName) const;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlaylistComponent)
 };

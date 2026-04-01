@@ -101,6 +101,9 @@ public:
 
         void closeButtonPressed() override
         {
+            if (auto* main = getMainComponent())
+                main->closePlaylistOnShutDown();
+
             saveWindowState();
             JUCEApplication::getInstance()->systemRequestedQuit();
         }

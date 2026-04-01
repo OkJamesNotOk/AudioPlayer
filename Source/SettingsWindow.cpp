@@ -22,7 +22,7 @@ SettingsWindow::SettingsWindow(SettingsComponent& settingsComponent)
     setResizeLimits(260, 140, 600, 500);
     setContentNonOwned(&settingsComponent, false);
 
-    const int windowWidth = 300;
+    const int windowWidth = 320;
     const int windowHeight = settingsComponent.getSettingsHeight();
     centreWithSize(windowWidth, windowHeight);
 

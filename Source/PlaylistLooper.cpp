@@ -163,7 +163,7 @@ void PlaylistLooper::initialiseSliders()
     volSlider.setRange(0.0, 2.0);
     volSlider.setValue(0.7);
     volSlider.setNumDecimalPlacesToDisplay(3);
-    volSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 50);
+    volSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, false, 60, 50);
     volSlider.setSliderSnapsToMousePosition(true);
     // Add description of what the slider is for before the slider value
     volSlider.textFromValueFunction = [](double value)
@@ -177,7 +177,7 @@ void PlaylistLooper::initialiseSliders()
     speedSlider.setRange(0.1, 4.0);
     speedSlider.setValue(1.0);
     speedSlider.setNumDecimalPlacesToDisplay(3);
-    speedSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 50);
+    speedSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, false, 60, 50);
     speedSlider.setVelocityBasedMode(true);
     // Add description of what the slider is for before the slider value
     speedSlider.textFromValueFunction = [](double value)
@@ -225,13 +225,13 @@ void PlaylistLooper::resized()
 {
     auto area = getLocalBounds().reduced(1);
 
-    auto rightPanel = area.removeFromRight(area.getWidth() * 10 / 32);
+    auto rightPanel = area.removeFromRight(area.getWidth() * 10 / 32).reduced(0, componentsMargin).withTrimmedRight(componentsMargin);
     auto leftPanel = area;
     auto rowH = leftPanel.getHeight() / 9;
 
     // Song name display and position slider 
-    songName.setBounds(leftPanel.removeFromTop(rowH));
-    posSlider.setBounds(leftPanel.removeFromTop(rowH).reduced(5, 0));
+    songName.setBounds(leftPanel.removeFromTop(rowH).reduced(componentsMargin,0));
+    posSlider.setBounds(leftPanel.removeFromTop(rowH).reduced(componentsMargin, 0));
 
     // Waveform display 
     auto displayArea = leftPanel.removeFromTop(rowH * 4);
@@ -241,7 +241,7 @@ void PlaylistLooper::resized()
     loopDisplay.setBounds(displayArea);
 
     // Buttons area
-    auto buttonArea = leftPanel;
+    auto buttonArea = leftPanel.withTrimmedBottom(1);
 
     const int buttonsPerRow = 3;
     const int buttonCount = static_cast<int>(rowButtons.size());
@@ -254,7 +254,7 @@ void PlaylistLooper::resized()
         const int row = i / buttonsPerRow;
         const int col = i % buttonsPerRow;
 
-        auto currentRowArea = buttonArea.withTrimmedTop(row * rowHeight).removeFromTop(rowHeight).reduced(5, 0);
+        auto currentRowArea = buttonArea.withTrimmedTop(row * rowHeight).removeFromTop(rowHeight).reduced(componentsMargin, 0);
 
         const int buttonsInThisRow = juce::jmin(buttonsPerRow, buttonCount - row * buttonsPerRow);
         const int buttonWidth = (buttonsInThisRow > 0) ? currentRowArea.getWidth() / buttonsInThisRow : 0;

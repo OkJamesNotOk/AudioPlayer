@@ -29,10 +29,13 @@ public:
     void loadSettings();
     void saveSettings() const;
 
-    bool getSettingValue(const juce::String& key) const;
-    void setSettingValue(const juce::String& key, bool value);
+    juce::var getSettingValue(const juce::String& key) const;
+    void setSettingValue(const juce::String& key, const juce::var& value);
 
-    std::function<void(const juce::String&, bool)> onSettingChanged;
+    bool getBoolSettingValue(const juce::String& key) const;
+    void setBoolSettingValue(const juce::String& key, bool value);
+
+    std::function<void(const juce::String&, const juce::var&)> onSettingChanged;
 
     int getSettingsCount() const;
     int getSettingsHeight() const;
@@ -40,36 +43,56 @@ public:
 private:
     juce::File getSettingsFile() const;
 
+    enum class SettingType
+    {
+        boolean,
+        integer,
+        floating,
+        text
+    };
+
     struct SettingDefinition
     {
         juce::String key;
         juce::String title;
         juce::String description;
-        bool defaultValue = false;
+        SettingType type = SettingType::boolean;
+        juce::var defaultValue = false;
     };
 
     struct SettingState
     {
-        bool value = false;
+        SettingType type = SettingType::boolean;
+        juce::var value = false;
     };
 
     struct SettingRow
     {
         juce::String key;
+        SettingType type = SettingType::boolean;
+
         std::unique_ptr<juce::Label> titleLabel;
         std::unique_ptr<juce::Label> descriptionLabel;
-        std::unique_ptr<juce::DrawableButton> button;
+
+        std::unique_ptr<juce::DrawableButton> drawableButton;
+        std::unique_ptr<juce::Slider> slider;
+        std::unique_ptr<juce::TextEditor> textEditor;
     };
 
     void initialiseDefinitions();
     void initialiseRows();
     void createSettingRow(const SettingDefinition& definition);
     void layoutRows(juce::Rectangle<int> area);
-    void syncButtonsFromSettings();
+    void syncRowsFromSettings();
     void attachCallbacks();
 
-    void updateButtonStyle(juce::DrawableButton& button, bool isOn);
-    void updateRowVisuals(SettingRow& row, bool isOn);
+    void updateToggleStyle(juce::DrawableButton& button, bool isOn);
+
+    void updateRowVisuals(SettingRow& row);
+
+    int getIntSettingValue(const juce::String& key) const;
+    double getFloatSettingValue(const juce::String& key) const;
+    juce::String getTextSettingValue(const juce::String& key) const;
 
     const SettingDefinition* findDefinition(const juce::String& key) const;
     SettingRow* findRow(const juce::String& key);

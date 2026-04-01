@@ -54,6 +54,8 @@ public:
 
     void settingsManagement(const juce::String& key, bool value);
     void updatePlaylistPresentation();
+
+    void closePlaylistOnShutDown();
 private:
 
     AudioFormatManager formatManager;

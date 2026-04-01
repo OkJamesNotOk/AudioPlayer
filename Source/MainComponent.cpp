@@ -407,3 +407,14 @@ bool MainComponent::wouldInternalPlaylistExceedScreen() const
 
     return targetHeight > display->userArea.getHeight();
 }
+
+void MainComponent::closePlaylistOnShutDown()
+{
+    if (!settingsComponent.getSettingValue("playlistWin") && internalPlaylistVisible)
+    {
+        internalPlaylistVisible = false;
+        updateInternalWindowSize();
+        resized();
+        repaint();
+    }
+}

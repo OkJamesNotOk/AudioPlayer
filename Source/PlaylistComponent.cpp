@@ -397,20 +397,14 @@ void PlaylistComponent::savePlaylist()
     for (const auto& file : trackTitles)
         playlistArray.add(file.getFullPathName());
 
-    juce::File saveFile =
-        juce::File::getSpecialLocation(juce::File::currentExecutableFile)
-        .getParentDirectory()
-        .getChildFile("playlist.json");
+    juce::File saveFile = getDataFile("playlist.json");
 
     saveFile.replaceWithText(juce::JSON::toString(juce::var(playlistArray), true));
 }
 
 void PlaylistComponent::loadPlaylist()
 {
-    juce::File loadFile =
-        juce::File::getSpecialLocation(juce::File::currentExecutableFile)
-        .getParentDirectory()
-        .getChildFile("playlist.json");
+    juce::File loadFile = getDataFile("playlist.json");
 
     if (!loadFile.existsAsFile())
         return;
@@ -444,6 +438,7 @@ void PlaylistComponent::clearAllPlaylist() {
     tableComponent.repaint();
 }
 
+//save player state
 void PlaylistComponent::savePlayerState(const PlayerState& state)
 {
     juce::DynamicObject::Ptr root = new juce::DynamicObject();
@@ -456,21 +451,15 @@ void PlaylistComponent::savePlayerState(const PlayerState& state)
     root->setProperty("loopEnd", state.loopEnd);
     root->setProperty("loopEnabled", state.loopEnabled);
 
-    juce::File saveFile =
-        juce::File::getSpecialLocation(juce::File::currentExecutableFile)
-        .getParentDirectory()
-        .getChildFile("playlistplayer.json");
+    juce::File saveFile = getDataFile("playlistplayer.json");
 
     saveFile.replaceWithText(juce::JSON::toString(juce::var(root.get()), true));
 }
 
-//save player state
+// load player state
 bool PlaylistComponent::loadPlayerState(PlayerState& state) const
 {
-    juce::File loadFile =
-        juce::File::getSpecialLocation(juce::File::currentExecutableFile)
-        .getParentDirectory()
-        .getChildFile("playlistplayer.json");
+    juce::File loadFile = getDataFile("playlistplayer.json");
 
     if (!loadFile.existsAsFile())
         return false;
@@ -632,4 +621,17 @@ void PlaylistComponent::updateFilter() {
         }
     }
     tableComponent.updateContent();
+}
+
+juce::File PlaylistComponent::getDataFile(const juce::String& fileName) const
+{
+    auto exeFolder = juce::File::getSpecialLocation(juce::File::currentExecutableFile)
+        .getParentDirectory();
+
+    auto dataFolder = exeFolder.getChildFile("data");
+
+    if (!dataFolder.exists())
+        dataFolder.createDirectory();
+
+    return dataFolder.getChildFile(fileName);
 }
