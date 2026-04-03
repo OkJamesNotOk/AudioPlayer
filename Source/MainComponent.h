@@ -53,7 +53,7 @@ public:
     void openPlaylist();
     void openSettings();
 
-    void settingsManagement(const juce::String& key, bool value);
+    void settingsManagement(const juce::String& key, const juce::var& value);
     void updatePlaylistPresentation();
 
     void closePlaylistOnShutDown();

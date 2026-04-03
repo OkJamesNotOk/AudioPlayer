@@ -221,7 +221,7 @@ void PlaylistPlayer::resized()
     posSlider.setBounds(leftPanel.removeFromTop(rowH).reduced(componentsMargin, 0));
 
     // Waveform display 
-    auto displayArea = leftPanel.removeFromTop(rowH * 4);
+    auto displayArea = leftPanel.removeFromTop(rowH * 4).reduced(componentsMargin, 0).withTrimmedBottom(componentsMargin);
     waveformDisplay.setBounds(displayArea);
 
     // Loop display
@@ -312,40 +312,6 @@ void PlaylistPlayer::buttonClicked(Button* button)
             playButton.setButtonText("| |");
             persistPlayerState();
         }
-    }
-    if (button == &loadButton)
-    {
-        // file chooser that allow multiple file selection
-        auto fileChooserFlags = FileBrowserComponent::canSelectMultipleItems;
-        fChooser.launchAsync(fileChooserFlags, [this](const FileChooser& chooser)
-            {
-                auto chosenFiles = chooser.getResults();
-
-                if (chosenFiles.size() > 0) {
-                    for (int i = 0; i < chosenFiles.size(); i++) {
-                        File file = chosenFiles[i];
-
-                        // add file to playlist if they have the extensions ".mp3;.wav;.flac"
-                        if (file.hasFileExtension(".mp3;.wav;.flac")) {
-                            playlistComponent.addFileToPlaylist(file);
-                        }
-                    }
-
-                    // The first file of the selected files is loaded into the player 
-                    // if it has the correct extension
-                    File file = chosenFiles[0];
-                    if (PlaylistComponent::isSupportedAudioFile(file)) {
-                        player->loadURL(URL{ file });
-                        currentFile = file;
-                        playlistComponent.setCurrentPlayingFile(currentFile);
-                        waveformDisplay.loadURL(URL{ file });
-                        playButton.setToggleState(true, juce::NotificationType::dontSendNotification);
-                        playButton.triggerClick();
-                        scrollLabelTextSet(String(file.getFileName()));
-                    }
-                    persistPlayerState();
-                }
-            });
     }
     if (button == &loopButton) {
         loop = button->getToggleState();
@@ -533,14 +499,12 @@ void PlaylistPlayer::filesDropped(const StringArray& files, int x, int y)
         player->loadURL(fileURL);
         waveformDisplay.loadURL(fileURL);
 
-        playlistComponent.addFileToPlaylist(currentFile);
         playlistComponent.setCurrentPlayingFile(currentFile);
 
         // changed to File instead of URL, for proper unicode filename display
         scrollLabelTextSet(currentFile.getFileName());
 
         setPlaybackState(autoplay);
-        persistPlayerState();
     }
 }
 
@@ -592,8 +556,7 @@ void PlaylistPlayer::timerCallback() {
     }
 }
 
-// Check if the description of the drag item contain a path name 
-// that end with extensions ".mp3;.wav;.flac"
+// Check if the description of the drag item contain a path name that end with extensions supported by playlist component
 bool PlaylistPlayer::isInterestedInDragSource(const SourceDetails& sourceDescriptions) {
     String file = sourceDescriptions.description.toString();
     if (PlaylistComponent::isSupportedAudioFile(juce::File(file))) {
@@ -614,7 +577,6 @@ void PlaylistPlayer::itemDropped(const SourceDetails& filename) {
         waveformDisplay.loadURL(URL{ file });
         setPlaybackState(autoplay);
         scrollLabelTextSet(String(file.getFileName()));
-        persistPlayerState();
     }
 }
 
@@ -733,4 +695,11 @@ bool PlaylistPlayer::isPlaying() const
 void PlaylistPlayer::setAutoPlayEnabled(bool enabled)
 {
     autoplay = enabled;
+}
+
+void PlaylistPlayer::setComponentsMargin(int newMargin)
+{
+    componentsMargin = juce::jmax(0, newMargin);
+    resized();
+    repaint();
 }

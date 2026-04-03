@@ -34,9 +34,7 @@ void WaveformDisplay::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::darkgrey);
 
-    auto drawArea = getLocalBounds().withTrimmedLeft(5)
-        .withTrimmedRight(5)
-        .withTrimmedBottom(5);
+    auto drawArea = getLocalBounds();
     auto bounds = drawArea.toFloat();
 
     g.setColour(juce::Colours::grey);

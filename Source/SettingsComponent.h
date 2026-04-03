@@ -40,6 +40,8 @@ public:
     int getSettingsCount() const;
     int getSettingsHeight() const;
 
+    int getIntSettingValue(const juce::String& key) const;
+
 private:
     juce::File getSettingsFile() const;
 
@@ -90,7 +92,6 @@ private:
 
     void updateRowVisuals(SettingRow& row);
 
-    int getIntSettingValue(const juce::String& key) const;
     double getFloatSettingValue(const juce::String& key) const;
     juce::String getTextSettingValue(const juce::String& key) const;
 

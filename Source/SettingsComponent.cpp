@@ -146,7 +146,7 @@ void SettingsComponent::createSettingRow(const SettingDefinition& definition)
         row.slider->setComponentID(definition.key);
         row.slider->setSliderStyle(juce::Slider::IncDecButtons);
         row.slider->setTextBoxStyle(juce::Slider::TextBoxAbove, false, 60, 24);
-        row.slider->setRange(0, 100, 1);
+        row.slider->setRange(0, 30, 1);
         row.slider->setTooltip(definition.description);
         addAndMakeVisible(*row.slider);
         break;

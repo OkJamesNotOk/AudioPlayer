@@ -60,7 +60,8 @@ MainComponent::MainComponent()
     formatManager.registerBasicFormats();
 
     PlaylistPlayer.setAutoPlayEnabled(settingsComponent.getSettingValue("autoPlay"));
-    settingsComponent.onSettingChanged = [this](const juce::String& key, bool value)
+    PlaylistPlayer.setComponentsMargin(settingsComponent.getIntSettingValue("playerMargin"));
+    settingsComponent.onSettingChanged = [this](const juce::String& key, const juce::var& value)
         {
             settingsManagement(key, value);
         };
@@ -298,17 +299,18 @@ void MainComponent::openSettings()
 }
 
 
-void MainComponent::settingsManagement(const juce::String& key, bool value)
+void MainComponent::settingsManagement(const juce::String& key, const juce::var& value)
 {
     if (key == "autoPlay")
     {
-        PlaylistPlayer.setAutoPlayEnabled(value);
+        PlaylistPlayer.setAutoPlayEnabled((bool)value);
     }
     else if (key == "playlistWin")
     {
+        const bool ValBool = (bool)value;
         if (auto* window = findParentComponentOfClass<juce::DocumentWindow>())
         {
-            if (!value)
+            if (!ValBool)
             {
                 internalCollapsedWindowHeight = window->getHeight();
             }
@@ -320,6 +322,9 @@ void MainComponent::settingsManagement(const juce::String& key, bool value)
 
         internalPlaylistVisible = false;
         updatePlaylistPresentation();
+    }
+    else if (key == "playerMargin") {
+        PlaylistPlayer.setComponentsMargin((int)value);
     }
 }
 

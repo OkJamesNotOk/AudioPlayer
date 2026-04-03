@@ -661,8 +661,5 @@ double PlaylistComponent::getOrCacheTrackDuration(const juce::File& file)
             return track.duration;
         }
     }
-
-    double duration = getTrackDuration(file);
-    trackTitles.push_back({ file, duration });
-    return duration;
+    return getTrackDuration(file);
 }

@@ -86,6 +86,9 @@ public:
     void setAutoPlayEnabled(bool enabled);
     bool getAutoPlayEnabled() const { return autoplay; }
 
+    void setComponentsMargin(int newMargin);
+    int getComponentsMargin() const { return componentsMargin; }
+
 private:
     // file chooser, used to add files into the player or the playlist
     FileChooser fChooser{ "Select a file..." };
