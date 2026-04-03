@@ -103,7 +103,7 @@ A normal FFmpeg build (runtime only) will NOT work because it does not include t
 
 * **High CPU Usage:** The application is not yet optimized; CPU usage may increase significantly while the playlist is open.
 * **Startup Time:** Launching the application may take very long to launch if a large playlist was saved from the previous session.
-* **Testing:** The FFmpeg integration has only been tested with `.mp4`, `.m4a`, `.mp3`, and `.wav` formats.
+* **Testing:** The FFmpeg integration has only been tested with `.mp4`, `.m4a`, `.mp3`, and `.wav` file formats.
 
 ## Disclaimer
 
