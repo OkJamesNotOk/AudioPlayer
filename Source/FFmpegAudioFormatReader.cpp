@@ -154,17 +154,15 @@ bool FFmpegAudioFormatReader::readSamples(int* const* destSamples,
         for (int ch = 0; ch < numDestChannels; ++ch) {
             if (destSamples[ch] == nullptr) continue;
 
-            // 1. Cast the base pointer to float
             float* floatDest = reinterpret_cast<float*>(destSamples[ch]);
 
-            // 2. Calculate the single correct write position
             const int destWritePos = startOffsetInDestBuffer + samplesWritten;
 
             const int srcCh = juce::jmin(ch, (int)numChannels - 1);
             const float* src = decodedBuffer.getReadPointer(srcCh, decodedBufferStart);
 
             for (int i = 0; i < toCopy; ++i) {
-                floatDest[destWritePos + i] = src[i]; // Fixed indexing
+                floatDest[destWritePos + i] = src[i];
             }
         }
 

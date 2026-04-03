@@ -490,7 +490,7 @@ juce::File PlaylistComponent::getNextTrack(juce::File currentFile)
     {
         if (trackTitles[i].file == currentFile)
         {
-            // Calculate next index (wrap around to 0 if at the end)
+            // Calculate next index, wrap to 0 if at the end
             int nextIndex = (i + 1) % trackTitles.size();
             return trackTitles[nextIndex].file;
         }
