@@ -1,7 +1,7 @@
-﻿/*
+/*
   ==============================================================================
 
-    PlaylistLooper.h
+    PlaylistPlayer.h
     Created: 18 Jan 2025 4:07:59pm
     Author:  OkJames
 
@@ -20,7 +20,7 @@
 //==============================================================================
 /*
 */
-class PlaylistLooper : 
+class PlaylistPlayer : 
     public Component, 
     public Button::Listener, 
     public Slider::Listener, 
@@ -29,12 +29,12 @@ class PlaylistLooper :
     public DragAndDropTarget
 {
 public:
-    PlaylistLooper(
+    PlaylistPlayer(
         DJAudioPlayer* player,
         AudioFormatManager& formatManagerToUse,
         AudioThumbnailCache& cacheToUse,
         PlaylistComponent& _playlistComponent);
-    ~PlaylistLooper();
+    ~PlaylistPlayer();
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -164,5 +164,5 @@ private:
 
     int componentsMargin = 5;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlaylistLooper)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlaylistPlayer)
 };

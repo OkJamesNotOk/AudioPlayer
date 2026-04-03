@@ -31,7 +31,7 @@ MainComponent::MainComponent()
     }
 
     addAndMakeVisible(playlistComponent);
-    addAndMakeVisible(playlistLooper);
+    addAndMakeVisible(PlaylistPlayer);
 
     for (auto* button : topBarButtons)
         addAndMakeVisible(button);
@@ -49,24 +49,25 @@ MainComponent::MainComponent()
     auto playlistDrawable = ImageHelpers::makeDrawableFromImage(playlistImage);
     playlistButton.setImages(playlistDrawable.get());
 
-    auto settingImage = ImageHelpers::loadPngFromBinaryData(BinaryData::settings3_png, BinaryData::settings3_pngSize);
+    auto settingImage = ImageHelpers::loadPngFromBinaryData(BinaryData::settings3_5_png, BinaryData::settings3_5_pngSize);
     auto settingDrawable = ImageHelpers::makeDrawableFromImage(settingImage);
     settingsButton.setImages(settingDrawable.get());
 
     settingsButton.setTooltip("Settings");
     playlistButton.setTooltip("Playlist");
 
+    formatManager.registerFormat(new FFmpegAudioFormat(), false);
     formatManager.registerBasicFormats();
 
-    playlistLooper.setAutoPlayEnabled(settingsComponent.getSettingValue("autoPlay"));
+    PlaylistPlayer.setAutoPlayEnabled(settingsComponent.getSettingValue("autoPlay"));
     settingsComponent.onSettingChanged = [this](const juce::String& key, bool value)
         {
             settingsManagement(key, value);
         };
 
-    playlistLooper.restoreSavedState();
+    PlaylistPlayer.restoreSavedState();
 
-    playlistLooper.onPlaybackStateChanged = [this](bool playing)
+    PlaylistPlayer.onPlaybackStateChanged = [this](bool playing)
         {
             if (onPlaybackStateChanged)
                 onPlaybackStateChanged(playing);
@@ -171,8 +172,8 @@ void MainComponent::resized()
 
     if (isExternal)
     {
-        playlistLooper.setBounds(area);
-        playlistLooper.setVisible(true);
+        PlaylistPlayer.setBounds(area);
+        PlaylistPlayer.setVisible(true);
 
         if (playlistComponent.getParentComponent() == this)
             playlistComponent.setVisible(false);
@@ -187,16 +188,16 @@ void MainComponent::resized()
         auto playlistArea = area.removeFromBottom(playlistHeight);
         area.removeFromBottom(gap);
 
-        playlistLooper.setBounds(area);
-        playlistLooper.setVisible(true);
+        PlaylistPlayer.setBounds(area);
+        PlaylistPlayer.setVisible(true);
 
         playlistComponent.setBounds(playlistArea);
         playlistComponent.setVisible(true);
     }
     else
     {
-        playlistLooper.setBounds(area);
-        playlistLooper.setVisible(true);
+        PlaylistPlayer.setBounds(area);
+        PlaylistPlayer.setVisible(true);
 
         if (playlistComponent.getParentComponent() == this)
             playlistComponent.setVisible(false);
@@ -204,20 +205,20 @@ void MainComponent::resized()
 }
 
 bool MainComponent::taskbarPlayPause() {
-    return playlistLooper.taskbarPlayPause();
+    return PlaylistPlayer.taskbarPlayPause();
 }
 
 void MainComponent::taskbarPrevious() {
-    playlistLooper.taskbarPrevious();
+    PlaylistPlayer.taskbarPrevious();
 }
 
 void MainComponent::taskbarNext() {
-    playlistLooper.taskbarNext();
+    PlaylistPlayer.taskbarNext();
 }
 
 bool MainComponent::isPlaying() const
 {
-    return playlistLooper.isPlaying();
+    return PlaylistPlayer.isPlaying();
 }
 
 void MainComponent::openPlaylist()
@@ -301,7 +302,7 @@ void MainComponent::settingsManagement(const juce::String& key, bool value)
 {
     if (key == "autoPlay")
     {
-        playlistLooper.setAutoPlayEnabled(value);
+        PlaylistPlayer.setAutoPlayEnabled(value);
     }
     else if (key == "playlistWin")
     {

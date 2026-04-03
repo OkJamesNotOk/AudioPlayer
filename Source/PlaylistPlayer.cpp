@@ -1,30 +1,17 @@
 /*
   ==============================================================================
 
-    PlaylistLooper.cpp
+    PlaylistPlayer.cpp
     Created: 26 Mar 2026 11:02:59pm
     Author:  OkJames
-    Should have named this PlaylistPlayer instead smh
+
   ==============================================================================
 */
 
 #include <JuceHeader.h>
-#include "PlaylistLooper.h"
+#include "PlaylistPlayer.h"
 
-//static juce::Image loadPngFromBinaryData(const void* data, int size)
-//{
-//    juce::MemoryInputStream stream(data, static_cast<size_t>(size), false);
-//    return juce::PNGImageFormat::loadFrom(stream);
-//}
-//
-//static std::unique_ptr<juce::Drawable> makeDrawableFromImage(const juce::Image& image)
-//{
-//    auto drawable = std::make_unique<juce::DrawableImage>();
-//    drawable->setImage(image);
-//    return drawable;
-//}
-
-PlaylistLooper::PlaylistLooper(DJAudioPlayer* _player,
+PlaylistPlayer::PlaylistPlayer(DJAudioPlayer* _player,
     AudioFormatManager& formatManagerToUse,
     AudioThumbnailCache& cacheToUse,
     PlaylistComponent& _playlistComponent) : player(_player),
@@ -57,7 +44,7 @@ PlaylistLooper::PlaylistLooper(DJAudioPlayer* _player,
     loopDisplay.addMouseListener(this, true);
 }
 
-PlaylistLooper::~PlaylistLooper()
+PlaylistPlayer::~PlaylistPlayer()
 {
     stopTimer();
 
@@ -76,7 +63,7 @@ PlaylistLooper::~PlaylistLooper()
     songName.setLookAndFeel(nullptr);
 }
 
-void PlaylistLooper::initialiseButtonGroups()
+void PlaylistPlayer::initialiseButtonGroups()
 {
     //arrays of buttons
     transportButtons = { &playButton, &prevButton, &nextButton };
@@ -92,7 +79,7 @@ void PlaylistLooper::initialiseButtonGroups()
     };
 }
 
-void PlaylistLooper::initialiseButtons()
+void PlaylistPlayer::initialiseButtons()
 {
     std::vector<juce::Button*> allButtons =
     {
@@ -143,7 +130,7 @@ void PlaylistLooper::initialiseButtons()
         button->setColour(juce::TextButton::textColourOnId, juce::Colours::black);
     }
 }
-void PlaylistLooper::initialiseSliders()
+void PlaylistPlayer::initialiseSliders()
 {
     std::vector<juce::Slider*> sliders = { &volSlider, &speedSlider, &posSlider };
 
@@ -197,7 +184,7 @@ void PlaylistLooper::initialiseSliders()
         if (!currentFile.existsAsFile())
             return juce::String("00:00");
 
-        double duration = playlistComponent.getTrackDuration(currentFile);
+        double duration = playlistComponent.getOrCacheTrackDuration(currentFile);
         double currentSeconds = value * duration;
 
         if (duration >= 3600)
@@ -214,14 +201,14 @@ void PlaylistLooper::initialiseSliders()
     };
 }
 
-void PlaylistLooper::paint(juce::Graphics& g)
+void PlaylistPlayer::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::darkgrey);
     g.setColour(juce::Colours::white);
     g.drawRect(getLocalBounds(), 1);   // draw an outline around the component
 }
 
-void PlaylistLooper::resized()
+void PlaylistPlayer::resized()
 {
     auto area = getLocalBounds().reduced(1);
 
@@ -272,7 +259,7 @@ void PlaylistLooper::resized()
     speedSlider.setBounds(rightPanel);
 }
 
-void PlaylistLooper::persistPlayerState()
+void PlaylistPlayer::persistPlayerState()
 {
     if (!currentFile.existsAsFile())
         return;
@@ -288,7 +275,7 @@ void PlaylistLooper::persistPlayerState()
     playlistComponent.savePlayerState(state);
 }
 
-void PlaylistLooper::buttonClicked(Button* button)
+void PlaylistPlayer::buttonClicked(Button* button)
 {
     if (button == &playButton)
     {
@@ -347,7 +334,7 @@ void PlaylistLooper::buttonClicked(Button* button)
                     // The first file of the selected files is loaded into the player 
                     // if it has the correct extension
                     File file = chosenFiles[0];
-                    if (file.hasFileExtension(".mp3;.wav;.flac")) {
+                    if (PlaylistComponent::isSupportedAudioFile(file)) {
                         player->loadURL(URL{ file });
                         currentFile = file;
                         playlistComponent.setCurrentPlayingFile(currentFile);
@@ -396,7 +383,7 @@ void PlaylistLooper::buttonClicked(Button* button)
     }
 }
 
-void PlaylistLooper::sliderValueChanged(Slider* slider)
+void PlaylistPlayer::sliderValueChanged(Slider* slider)
 {
     if (slider == &volSlider)
     {
@@ -422,7 +409,7 @@ void PlaylistLooper::sliderValueChanged(Slider* slider)
     }
 }
 
-void PlaylistLooper::volSliderColour() {
+void PlaylistPlayer::volSliderColour() {
     double maxVol = volSlider.getMaximum();
     double vol = volSlider.getValue();
     double greenSpot = (maxVol * 0.35);
@@ -439,12 +426,12 @@ void PlaylistLooper::volSliderColour() {
     }
 }
 
-void PlaylistLooper::scrollLabelTextSet(const juce::String& str)
+void PlaylistPlayer::scrollLabelTextSet(const juce::String& str)
 {
     songName.setText(str, juce::dontSendNotification);
 }
 
-void PlaylistLooper::updateMarkers(const MouseEvent& e) {
+void PlaylistPlayer::updateMarkers(const MouseEvent& e) {
     // get mouse position on the component
     MouseEvent event = e.getEventRelativeTo(&loopDisplay);
     auto waveformMouPos = event.getPosition();
@@ -467,7 +454,7 @@ void PlaylistLooper::updateMarkers(const MouseEvent& e) {
         if (isEndLoop) {
             if (loopStart > loopEnd) {
                 loopStartButton.setToggleState(false, juce::NotificationType::dontSendNotification);
-                PlaylistLooper::buttonClicked(&loopStartButton);
+                PlaylistPlayer::buttonClicked(&loopStartButton);
             }
         }
     }
@@ -487,14 +474,14 @@ void PlaylistLooper::updateMarkers(const MouseEvent& e) {
         if (isStartLoop) {
             if (loopEnd < loopStart) {
                 loopEndButton.setToggleState(false, juce::NotificationType::dontSendNotification);
-                PlaylistLooper::buttonClicked(&loopEndButton);
+                PlaylistPlayer::buttonClicked(&loopEndButton);
             }
         }
     }
 }
 
 // Draw preview of the markers (Does not set the markers)
-void PlaylistLooper::previewMarkers(const MouseEvent& e) {
+void PlaylistPlayer::previewMarkers(const MouseEvent& e) {
     MouseEvent event = e.getEventRelativeTo(&loopDisplay);
     auto waveformMouPos = event.getPosition();
     double clickX = (double)waveformMouPos.x / loopDisplay.getWidth();
@@ -514,28 +501,28 @@ void PlaylistLooper::previewMarkers(const MouseEvent& e) {
     }
 }
 
-void PlaylistLooper::mouseDown(const MouseEvent& e) {
+void PlaylistPlayer::mouseDown(const MouseEvent& e) {
 
 }
 
-void PlaylistLooper::mouseUp(const MouseEvent& e) {
+void PlaylistPlayer::mouseUp(const MouseEvent& e) {
     if (e.eventComponent == &loopDisplay) {
         updateMarkers(e);
     }
 }
 
-void PlaylistLooper::mouseDrag(const MouseEvent& e) {
+void PlaylistPlayer::mouseDrag(const MouseEvent& e) {
     if (e.eventComponent == &loopDisplay) {
         previewMarkers(e);
     }
 }
 
-bool PlaylistLooper::isInterestedInFileDrag(const StringArray& files)
+bool PlaylistPlayer::isInterestedInFileDrag(const StringArray& files)
 {
     return true;
 }
 
-void PlaylistLooper::filesDropped(const StringArray& files, int x, int y)
+void PlaylistPlayer::filesDropped(const StringArray& files, int x, int y)
 {
     if (files.size() == 1)
     {
@@ -557,7 +544,7 @@ void PlaylistLooper::filesDropped(const StringArray& files, int x, int y)
     }
 }
 
-void PlaylistLooper::timerCallback() {
+void PlaylistPlayer::timerCallback() {
     double g = player->getPositionRelative();
     waveformDisplay.setPositionRelative(g);
     if (!isnan(g)) {
@@ -607,16 +594,16 @@ void PlaylistLooper::timerCallback() {
 
 // Check if the description of the drag item contain a path name 
 // that end with extensions ".mp3;.wav;.flac"
-bool PlaylistLooper::isInterestedInDragSource(const SourceDetails& sourceDescriptions) {
+bool PlaylistPlayer::isInterestedInDragSource(const SourceDetails& sourceDescriptions) {
     String file = sourceDescriptions.description.toString();
-    if (file.endsWith(".mp3") || file.endsWith(".wav") || file.endsWith(".flac")) {
+    if (PlaylistComponent::isSupportedAudioFile(juce::File(file))) {
         return true;
     }
     return false;
 }
 
 // Get file path from dragged item and load into player
-void PlaylistLooper::itemDropped(const SourceDetails& filename) {
+void PlaylistPlayer::itemDropped(const SourceDetails& filename) {
     String filePath = filename.description.toString();
 
     File file(filePath);
@@ -632,7 +619,7 @@ void PlaylistLooper::itemDropped(const SourceDetails& filename) {
 }
 
 // Bind the space key to the function of the play button
-bool PlaylistLooper::keyPressed(const KeyPress& key) {
+bool PlaylistPlayer::keyPressed(const KeyPress& key) {
     if (key == juce::KeyPress::spaceKey) {
         playButton.triggerClick();
         return true;
@@ -641,7 +628,7 @@ bool PlaylistLooper::keyPressed(const KeyPress& key) {
     return false;
 }
 
-void PlaylistLooper::restoreSavedState()
+void PlaylistPlayer::restoreSavedState()
 {
     PlaylistComponent::PlayerState savedState;
 
@@ -708,12 +695,12 @@ void PlaylistLooper::restoreSavedState()
     }
 }
 
-bool PlaylistLooper::taskbarPlayPause()
+bool PlaylistPlayer::taskbarPlayPause()
 {
     return setPlaybackState(!playButton.getToggleState());
 }
 
-bool PlaylistLooper::setPlaybackState(bool shouldPlay)
+bool PlaylistPlayer::setPlaybackState(bool shouldPlay)
 {
     playButton.setToggleState(shouldPlay, juce::dontSendNotification);
 
@@ -728,22 +715,22 @@ bool PlaylistLooper::setPlaybackState(bool shouldPlay)
     return shouldPlay;
 }
 
-void PlaylistLooper::taskbarPrevious()
+void PlaylistPlayer::taskbarPrevious()
 {
     prevButton.triggerClick();
 }
 
-void PlaylistLooper::taskbarNext()
+void PlaylistPlayer::taskbarNext()
 {
     nextButton.triggerClick();
 }
 
-bool PlaylistLooper::isPlaying() const
+bool PlaylistPlayer::isPlaying() const
 {
     return playButton.getToggleState();
 }
 
-void PlaylistLooper::setAutoPlayEnabled(bool enabled)
+void PlaylistPlayer::setAutoPlayEnabled(bool enabled)
 {
     autoplay = enabled;
 }

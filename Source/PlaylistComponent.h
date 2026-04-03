@@ -16,6 +16,7 @@
 #include "ImageHelper.h"
 #include "MoveButtonsComponent.h"
 #include "ScrollLabel.h"
+#include "FFmpegAudioFormat.h"
 
 //==============================================================================
 /*
@@ -60,6 +61,8 @@ public:
     // return duration of input file
     double getTrackDuration(const File& file);
 
+    double getOrCacheTrackDuration(const juce::File& file);
+
     // function used to add input file into the vector trackTitles
     void addFileToPlaylist(const File& file);
 
@@ -71,6 +74,8 @@ public:
 
     // previous track on full playlist
     juce::File getPreviousTrack(juce::File currentFile);
+
+    static bool isSupportedAudioFile(const juce::File& file);
 
     // player state
     struct PlayerState
@@ -107,14 +112,20 @@ public:
 private:
     TableListBox tableComponent;
 
+    struct TrackInfo
+    {
+        juce::File file;
+        double duration = 0.0;
+    };
+
     // vector containing files which makes up the playlist
-    std::vector<juce::File> trackTitles;
+    std::vector<TrackInfo> trackTitles;
+
+    // vector containing the tracks that match the filter
+    std::vector<TrackInfo> filteredTrackTitles;
 
     // Search bar for looking up specific track in the playlist
     juce::TextEditor searchBar;
-
-    // vector containing the tracks that match the filter
-    std::vector<juce::File> filteredTrackTitles;
 
     // filter the tracks, update the vector filteredTrackTitles
     void updateFilter();

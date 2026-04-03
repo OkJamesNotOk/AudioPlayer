@@ -12,8 +12,9 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "DJAudioPlayer.h"
+#include "FFmpegAudioFormat.h"
 #include "PlaylistComponent.h"
-#include "PlaylistLooper.h"
+#include "PlaylistPlayer.h"
 #include "PlaylistWindow.h"
 #include "SettingsWindow.h"
 #include "ImageHelper.h"
@@ -65,7 +66,7 @@ private:
 
     PlaylistComponent playlistComponent;
     DJAudioPlayer looperPlayer{ formatManager };
-    PlaylistLooper playlistLooper{ &looperPlayer, formatManager, thumbCache, playlistComponent };
+    PlaylistPlayer PlaylistPlayer{ &looperPlayer, formatManager, thumbCache, playlistComponent };
 
     juce::DrawableButton settingsButton{ "SettingsButton", juce::DrawableButton::ImageOnButtonBackground };
     juce::DrawableButton playlistButton{ "PlaylistButton", juce::DrawableButton::ImageOnButtonBackground };

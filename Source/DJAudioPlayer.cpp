@@ -41,13 +41,25 @@ double DJAudioPlayer::getPositionRelative() {
     return transportSource.getCurrentPosition() / length;
 }
 
-void DJAudioPlayer::loadURL(URL audioURL) {
+void DJAudioPlayer::loadURL(URL audioURL)
+{
     auto* reader = formatManager.createReaderFor(audioURL.createInputStream(false));
-    if (reader != nullptr) // good file!
+
+    if (reader != nullptr)
     {
+        juce::Logger::writeToLog("loadURL success");
+        juce::Logger::writeToLog("Reader sample rate: " + juce::String(reader->sampleRate));
+        juce::Logger::writeToLog("Reader length: " + juce::String((double)reader->lengthInSamples));
+        juce::Logger::writeToLog("Reader channels: " + juce::String((int)reader->numChannels));
+        juce::Logger::writeToLog("Reader type: " + juce::String(typeid(*reader).name()));
+
         std::unique_ptr<AudioFormatReaderSource> newSource(new AudioFormatReaderSource(reader, true));
         transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
         readerSource.reset(newSource.release());
+    }
+    else
+    {
+        juce::Logger::writeToLog("loadURL failed: no reader created");
     }
 }
 

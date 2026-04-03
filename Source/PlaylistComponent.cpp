@@ -1,4 +1,4 @@
-﻿/*
+/*
   ==============================================================================
 
     PlaylistComponent.cpp
@@ -84,7 +84,7 @@ void PlaylistComponent::paintRowBackground(Graphics& g, int rowNumber, int width
     auto alternateColour = getLookAndFeel().findColour(ListBox::backgroundColourId)
         .interpolatedWith(getLookAndFeel().findColour(ListBox::textColourId), 0.03f);
     if (rowNumber >= 0 && rowNumber < filteredTrackTitles.size()
-        && filteredTrackTitles[rowNumber] == currentPlayingFile)
+        && filteredTrackTitles[rowNumber].file == currentPlayingFile)
     {
         g.fillAll(juce::Colours::orange); // current playing row colour
     }
@@ -106,10 +106,7 @@ void PlaylistComponent::setCurrentPlayingFile(const juce::File& file)
 }
 
 void PlaylistComponent::paintCell(Graphics& g, int rowNumber, int columnId, int width, int height, bool rowIsSelected) {
-    //if(columnId ==1){
-    //    g.setColour(juce::Colour::fromString("#FF457B9D"));
-    //    g.drawText(filteredTrackTitles[rowNumber].getFileName(), 2, 0, width - 4, height, Justification::centredLeft, true);
-    //}
+
 }
 
 PlaylistComponent::~PlaylistComponent()
@@ -188,37 +185,30 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int columnI
         }
 
         bool shouldScroll = isRowSelected;
-        titleLabel->setText(filteredTrackTitles[rowNumber].getFileName(), juce::dontSendNotification);
+        titleLabel->setText(filteredTrackTitles[rowNumber].file.getFileName(), juce::dontSendNotification);
         titleLabel->setScrollingEnabled(shouldScroll);
         return existingComponentToUpdate;
     }
-    if (columnId == 2) {
-        juce::Label* durationLabel = dynamic_cast<juce::Label*>(existingComponentToUpdate);
-        if (existingComponentToUpdate == nullptr) {
+    if (columnId == 2)
+    {
+        auto* durationLabel = dynamic_cast<juce::Label*>(existingComponentToUpdate);
+        if (durationLabel == nullptr)
             durationLabel = new juce::Label();
-            juce::File file(filteredTrackTitles[rowNumber]);
 
-            double duration = getTrackDuration(file);
-            juce::String durationText = duration >= 3600
-                ? juce::String::formatted("%02d:%02d:%02d", (int)(duration / 3600), (int)(duration / 60) % 60, (int)duration % 60)
-                : juce::String::formatted("%02d:%02d", (int)(duration / 60), (int)(duration) % 60);
+        double duration = filteredTrackTitles[rowNumber].duration;
 
-            durationLabel->setText(durationText, juce::NotificationType::dontSendNotification);
-            durationLabel->setColour(juce::Label::textColourId, juce::Colour::fromString("#FFAFAFDC"));
-            durationLabel->setJustificationType(juce::Justification::centredLeft);
-            durationLabel->setFont(juce::Font(14.0f));
+        juce::String durationText = duration >= 3600
+            ? juce::String::formatted("%02d:%02d:%02d",
+                (int)(duration / 3600), (int)(duration / 60) % 60, (int)duration % 60)
+            : juce::String::formatted("%02d:%02d",
+                (int)(duration / 60), (int)duration % 60);
 
-            existingComponentToUpdate = durationLabel;
-        }
-        else {
-            juce::File file(filteredTrackTitles[rowNumber]);
-            double duration = getTrackDuration(file);
-            juce::String durationText = duration >= 3600
-                ? juce::String::formatted("%02d:%02d:%02d", (int)(duration / 3600), (int)(duration / 60) % 60, (int)duration % 60)
-                : juce::String::formatted("%02d:%02d", (int)(duration / 60), (int)(duration) % 60);
+        durationLabel->setText(durationText, juce::dontSendNotification);
+        durationLabel->setColour(juce::Label::textColourId, juce::Colour::fromString("#FFAFAFDC"));
+        durationLabel->setJustificationType(juce::Justification::centredLeft);
+        durationLabel->setFont(juce::Font(14.0f));
 
-            durationLabel->setText(durationText, juce::NotificationType::dontSendNotification);
-        }
+        return durationLabel;
     }
     if (columnId == 3)
     {
@@ -230,7 +220,7 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int columnI
             existingComponentToUpdate = moveComp;
         }
 
-        moveComp->setRowFile(filteredTrackTitles[rowNumber]);
+        moveComp->setRowFile(filteredTrackTitles[rowNumber].file);
     }
     if (columnId == 4) {
         auto* deleteBtn = dynamic_cast<juce::DrawableButton*>(existingComponentToUpdate);
@@ -242,7 +232,7 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int columnI
             existingComponentToUpdate = deleteBtn;
         }
         // using full path name as ID because they are all unique
-        deleteBtn->setComponentID(filteredTrackTitles[rowNumber].getFullPathName());
+        deleteBtn->setComponentID(filteredTrackTitles[rowNumber].file.getFullPathName());
     }
     return existingComponentToUpdate;
 }
@@ -251,7 +241,7 @@ bool PlaylistComponent::moveTrackUp(const juce::File& file)
 {
     for (size_t i = 1; i < trackTitles.size(); ++i)
     {
-        if (trackTitles[i] == file)
+        if (trackTitles[i].file == file)
         {
             std::swap(trackTitles[i], trackTitles[i - 1]);
             updateFilter();
@@ -267,7 +257,7 @@ bool PlaylistComponent::moveTrackDown(const juce::File& file)
 {
     for (size_t i = 0; i + 1 < trackTitles.size(); ++i)
     {
-        if (trackTitles[i] == file)
+        if (trackTitles[i].file == file)
         {
             std::swap(trackTitles[i], trackTitles[i + 1]);
             updateFilter();
@@ -290,7 +280,7 @@ void PlaylistComponent::buttonClicked(Button* button) {
                 if (chosenFiles.size() > 0) {
                     for (int i = 0; i < chosenFiles.size(); i++) {
                         File file = chosenFiles[i];
-                        if (file.hasFileExtension(".mp3;.wav;.flac")) {
+                        if (isSupportedAudioFile(file)) {
                             addFileToPlaylist(file);
                         }
                     }
@@ -329,7 +319,7 @@ void PlaylistComponent::buttonClicked(Button* button) {
         else{
             for (auto i = trackTitles.begin(); i != trackTitles.end(); ++i)
             {
-                if (i->getFullPathName() == id)
+                if (i->file.getFullPathName() == id)
                 {
                     trackTitles.erase(i);
                     updateFilter();
@@ -395,7 +385,7 @@ void PlaylistComponent::savePlaylist()
     juce::Array<juce::var> playlistArray;
 
     for (const auto& file : trackTitles)
-        playlistArray.add(file.getFullPathName());
+        playlistArray.add(file.file.getFullPathName());
 
     juce::File saveFile = getDataFile("playlist.json");
 
@@ -422,7 +412,7 @@ void PlaylistComponent::loadPlaylist()
         juce::File track(item.toString());
 
         if (track.existsAsFile() && !checkFileDuplicate(track))
-            trackTitles.push_back(track);
+            trackTitles.push_back({ track, getTrackDuration(track) });
     }
 
     updateFilter();
@@ -470,7 +460,20 @@ bool PlaylistComponent::loadPlayerState(PlayerState& state) const
     if (obj == nullptr)
         return false;
 
-    state.currentFile = juce::File(obj->getProperty("currentFile").toString());
+    juce::String filepath = obj->getProperty("currentFile").toString();
+
+    if (filepath.isEmpty())
+        return false;
+
+    if (!juce::File::isAbsolutePath(filepath))
+        return false;
+
+    juce::File fileToLoadPlayer(filepath);
+
+    if (!fileToLoadPlayer.existsAsFile())
+        return false;
+
+    state.currentFile = fileToLoadPlayer;
     state.position = static_cast<double>(obj->getProperty("position"));
     state.volume = static_cast<double>(obj->getProperty("volume"));
     state.speed = static_cast<double>(obj->getProperty("speed"));
@@ -485,35 +488,35 @@ juce::File PlaylistComponent::getNextTrack(juce::File currentFile)
 {
     for (size_t i = 0; i < trackTitles.size(); ++i)
     {
-        if (trackTitles[i] == currentFile)
+        if (trackTitles[i].file == currentFile)
         {
             // Calculate next index (wrap around to 0 if at the end)
             int nextIndex = (i + 1) % trackTitles.size();
-            return trackTitles[nextIndex];
+            return trackTitles[nextIndex].file;
         }
     }
     // If file not found or playlist empty, return the first track if available
-    return trackTitles.size() > 0 ? trackTitles[0] : juce::File{};
+    return trackTitles.size() > 0 ? trackTitles[0].file : juce::File{};
 }
 
 juce::File PlaylistComponent::getPreviousTrack(juce::File currentFile)
 {
     for (size_t i = 0; i < trackTitles.size(); ++i)
     {
-        if (trackTitles[i] == currentFile)
+        if (trackTitles[i].file == currentFile)
         {
             // Calculate next index (wrap around to 0 if at the end)
             int previousIndex = (int(i) - 1 + (int)trackTitles.size()) % (int)trackTitles.size();
-            return trackTitles[previousIndex];
+            return trackTitles[previousIndex].file;
         }
     }
     // If file not found or playlist empty, return the first track if available
-    return trackTitles.size() > 0 ? trackTitles[0] : juce::File{};
+    return trackTitles.size() > 0 ? trackTitles[0].file : juce::File{};
 }
 
 bool PlaylistComponent::isInterestedInFileDrag(const StringArray& files) {
     for (auto& file : files) {
-        if (file.endsWith(".mp3") || file.endsWith(".wav") || file.endsWith(".flac")) {
+        if (isSupportedAudioFile(juce::File(file))) {
             return true;
         }
     }
@@ -522,9 +525,9 @@ bool PlaylistComponent::isInterestedInFileDrag(const StringArray& files) {
 
 void PlaylistComponent::filesDropped(const StringArray& files, int x, int y) {
     for (auto& file : files) {
-        if (file.endsWith(".mp3") || file.endsWith(".wav") || file.endsWith(".flac")) {
+        if (isSupportedAudioFile(juce::File(file))) {
             if (!checkFileDuplicate(file)) {
-                trackTitles.push_back(file);
+                trackTitles.push_back({ juce::File(file), getTrackDuration(juce::File(file)) });
                 updateFilter();
             }
         }
@@ -533,8 +536,9 @@ void PlaylistComponent::filesDropped(const StringArray& files, int x, int y) {
 }
 
 void PlaylistComponent::addFileToPlaylist(const File& file) {
-    if (!checkFileDuplicate(file)) {
-        trackTitles.push_back(file);
+    if (!checkFileDuplicate(file))
+    {
+        trackTitles.push_back({ file, getTrackDuration(file) }); // cache once
         updateFilter();
         tableComponent.updateContent();
     }
@@ -548,7 +552,7 @@ bool PlaylistComponent::checkFileDuplicate(const File& file) {
 
     //check if there is a matching track already in the list
     for (int i = 0; i < trackTitles.size(); i++) {
-        if (file.getFullPathName() == trackTitles[i].getFullPathName()) {
+        if (file.getFullPathName() == trackTitles[i].file.getFullPathName()) {
             return true;
         }
     }
@@ -583,7 +587,7 @@ void PlaylistComponent::cellClicked(int rowNumber, int columnId, const juce::Mou
 var PlaylistComponent::getDragSourceDescription(const SparseSet<int>& selectedRow) {
     if (selectedRow.size() > 0) {
         int row = selectedRow[0];
-        return filteredTrackTitles[row].getFullPathName();
+        return filteredTrackTitles[row].file.getFullPathName();
     }
     return {};
 }
@@ -591,7 +595,7 @@ var PlaylistComponent::getDragSourceDescription(const SparseSet<int>& selectedRo
 void PlaylistComponent::mouseDrag(const MouseEvent& event) {
     int row = tableComponent.getSelectedRow();
     if (row >= 0 && row < filteredTrackTitles.size()) {
-        var filename = filteredTrackTitles[row].getFullPathName();
+        var filename = filteredTrackTitles[row].file.getFullPathName();
 
         if (DragAndDropContainer* container = findParentComponentOfClass<DragAndDropContainer>()) {
             container->startDragging(filename, this);
@@ -599,27 +603,31 @@ void PlaylistComponent::mouseDrag(const MouseEvent& event) {
     }
 }
 
-double PlaylistComponent::getTrackDuration(const File& file) {
+double PlaylistComponent::getTrackDuration(const File& file)
+{
     AudioFormatManager fManager;
+    fManager.registerFormat(new FFmpegAudioFormat(), false);
     fManager.registerBasicFormats();
 
     std::unique_ptr<AudioFormatReader> r(fManager.createReaderFor(file));
 
-    if (r != nullptr) {
+    if (r != nullptr && r->sampleRate > 0.0)
         return r->lengthInSamples / r->sampleRate;
-    }
+
     return 0.0;
 }
 
-void PlaylistComponent::updateFilter() {
+void PlaylistComponent::updateFilter()
+{
     juce::String searchText = searchBar.getText().toLowerCase();
     filteredTrackTitles.clear();
 
-    for (const auto& file : trackTitles) {
-        if (file.getFileNameWithoutExtension().toLowerCase().contains(searchText)) {
-            filteredTrackTitles.push_back(file);
-        }
+    for (const auto& track : trackTitles)
+    {
+        if (track.file.getFileNameWithoutExtension().toLowerCase().contains(searchText))
+            filteredTrackTitles.push_back(track);
     }
+
     tableComponent.updateContent();
 }
 
@@ -634,4 +642,27 @@ juce::File PlaylistComponent::getDataFile(const juce::String& fileName) const
         dataFolder.createDirectory();
 
     return dataFolder.getChildFile(fileName);
+}
+
+bool PlaylistComponent::isSupportedAudioFile(const juce::File& file)
+{
+    return file.hasFileExtension(".mp3;.wav;.flac;.aac;.m4a;.mp4;.mov;.ogg;.opus;.wma;.aiff;.aif;.alac;.ac3;.caf;.amr;.ape");
+}
+
+double PlaylistComponent::getOrCacheTrackDuration(const juce::File& file)
+{
+    for (auto& track : trackTitles)
+    {
+        if (track.file == file)
+        {
+            if (track.duration <= 0.0)
+                track.duration = getTrackDuration(file);
+
+            return track.duration;
+        }
+    }
+
+    double duration = getTrackDuration(file);
+    trackTitles.push_back({ file, duration });
+    return duration;
 }

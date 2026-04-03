@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    PlaylistLooper.h
+    PlaylistPlayer.h
     Created: 18 Jan 2025 4:07:59pm
     Author:  OkJames
 

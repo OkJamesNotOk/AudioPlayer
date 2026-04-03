@@ -23,6 +23,9 @@ public:
     void setScrollingEnabled(bool shouldScroll);
 
     void paint(juce::Graphics& g) override;
+    void updateTimerState();
+    void resized() override;
+
 private:
     // width of text
     int width = 0;
