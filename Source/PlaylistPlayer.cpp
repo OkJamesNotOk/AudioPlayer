@@ -142,8 +142,6 @@ void PlaylistPlayer::initialiseSliders()
     }
     posSlider.setLookAndFeel(&customButton);
 
-    // Set range, initial value, and precision to the speed slider
-    // Set velocity based mode on for better control in the change of speed
     volSlider.setSliderStyle(juce::Slider::LinearVertical);
     // add mouse listener to change slider colour
     volSlider.addMouseListener(this, true);
@@ -157,9 +155,9 @@ void PlaylistPlayer::initialiseSliders()
         {
             return juce::String(value, 2);
         };
-
-
-    // Change speed slider for more surface area to click on
+ 
+    // Set range, initial value, and precision to the speed slider
+    // Set velocity based mode on for better control in the change of speed
     speedSlider.setSliderStyle(juce::Slider::LinearVertical);
     speedSlider.setRange(0.1, 4.0);
     speedSlider.setValue(1.0);
