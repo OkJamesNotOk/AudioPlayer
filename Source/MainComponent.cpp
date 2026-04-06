@@ -61,6 +61,7 @@ MainComponent::MainComponent()
 
     PlaylistPlayer.setAutoPlayEnabled(settingsComponent.getSettingValue("autoPlay"));
     PlaylistPlayer.setComponentsMargin(settingsComponent.getIntSettingValue("playerMargin"));
+    looperPlayer.setLimiterEnabled(settingsComponent.getBoolSettingValue("limiterEnabled"));
     settingsComponent.onSettingChanged = [this](const juce::String& key, const juce::var& value)
         {
             settingsManagement(key, value);
@@ -75,6 +76,11 @@ MainComponent::MainComponent()
         };
 
     updatePlaylistPresentation();
+
+
+    // enable keyboards events
+    setWantsKeyboardFocus(true);
+    setMouseClickGrabsKeyboardFocus(true);
 }
 
 MainComponent::~MainComponent()
@@ -288,10 +294,10 @@ void MainComponent::openSettings()
         auto mainBounds = mainWindow->getBounds();
 
         int gap = 10;
-        int newX = mainBounds.getX() - settingsWindow->getWidth() - gap;
-        int newY = mainBounds.getY();
+        //int newX = mainBounds.getX() - settingsWindow->getWidth() - gap;
+        //int newY = mainBounds.getY();
 
-        settingsWindow->setTopLeftPosition(newX, newY);
+        settingsWindow->setTopLeftPosition(mainBounds.getRight() + gap, mainBounds.getY());
     }
 
     settingsWindow->setVisible(true);
@@ -325,6 +331,12 @@ void MainComponent::settingsManagement(const juce::String& key, const juce::var&
     }
     else if (key == "playerMargin") {
         PlaylistPlayer.setComponentsMargin((int)value);
+    }
+    else if (key == "seekStep") {
+        PlaylistPlayer.setSeekStep((double)value);
+    }
+    else if (key == "limiterEnabled") {
+        looperPlayer.setLimiterEnabled((bool)value);
     }
 }
 
@@ -423,4 +435,16 @@ void MainComponent::closePlaylistOnShutDown()
         resized();
         repaint();
     }
+}
+
+// key to the function of the play button
+bool MainComponent::keyPressed(const KeyPress& key) {
+    return PlaylistPlayer.handleKeyPress(key);
+}
+
+void MainComponent::parentHierarchyChanged()
+{
+    if (auto* window = findParentComponentOfClass<juce::DocumentWindow>())
+        if (window->isActiveWindow())
+            grabKeyboardFocus();
 }

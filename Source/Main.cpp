@@ -99,6 +99,22 @@ public:
 #endif
         }
 
+        void activeWindowStatusChanged() override
+        {
+            DocumentWindow::activeWindowStatusChanged();
+
+            if (isActiveWindow())
+            {
+                juce::Component::SafePointer<juce::Component> safeContent(getContentComponent());
+
+                juce::MessageManager::callAsync([safeContent]()
+                    {
+                        if (safeContent != nullptr)
+                            safeContent->grabKeyboardFocus();
+                    });
+            }
+        }
+
         void closeButtonPressed() override
         {
             if (auto* main = getMainComponent())

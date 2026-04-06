@@ -21,14 +21,28 @@ DJAudioPlayer::~DJAudioPlayer() {}
 void DJAudioPlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate) {
     transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
     resampleSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
+
+    limiterParams.thresholdDb = -12.0f;
+    limiterParams.attackMs = 1.0f;
+    limiterParams.releaseMs = 80.0f;
+    limiterParams.lookAheadMs = 5.0f;
+    limiterParams.gainSmoothMs = 2.0f;
+
+    volumeLimiter.setLimiterParameters(limiterParams);
+    volumeLimiter.prepare(sampleRate, samplesPerBlockExpected);
 }
 void DJAudioPlayer::getNextAudioBlock(const AudioSourceChannelInfo& bufferToFill) {
     resampleSource.getNextAudioBlock(bufferToFill);
 
+    if (bufferToFill.buffer != nullptr)
+        volumeLimiter.processBlock(*bufferToFill.buffer,
+            bufferToFill.startSample,
+            bufferToFill.numSamples);
 }
 void DJAudioPlayer::releaseResources() {
     transportSource.releaseResources();
     resampleSource.releaseResources();
+    volumeLimiter.reset();
 }
 
 double DJAudioPlayer::getPositionRelative() {
@@ -64,8 +78,8 @@ void DJAudioPlayer::loadURL(URL audioURL)
 }
 
 void DJAudioPlayer::setGain(double gain) {
-    if (gain < 0 || gain > 2.0) {
-        std::cout << "DJAudioPlayer::setGain: gain should be between 0 and 2" << std::endl;
+    if (gain < 0 || gain > maxVolume) {
+        std::cout << "DJAudioPlayer::setGain: gain should be between 0 and maxVolume" << std::endl;
     }
     else {
         transportSource.setGain(gain);
@@ -101,4 +115,11 @@ void DJAudioPlayer::stop() {
     transportSource.stop();
 }
 
+void DJAudioPlayer::setLimiterEnabled(bool enabled)
+{
+    volumeLimiter.setEnabled(enabled);
+}
 
+double DJAudioPlayer::getMaxVolume() {
+    return maxVolume;
+}

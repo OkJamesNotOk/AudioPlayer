@@ -8,6 +8,12 @@
 
 namespace BinaryData
 {
+    extern const char*   forwardsolid_png;
+    const int            forwardsolid_pngSize = 528;
+
+    extern const char*   rewindsolid_png;
+    const int            rewindsolid_pngSize = 563;
+
     extern const char*   settings3_5_png;
     const int            settings3_5_pngSize = 867;
 
@@ -78,7 +84,7 @@ namespace BinaryData
     const int            trashsolid_pngSize = 708;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
-    const int namedResourceListSize = 23;
+    const int namedResourceListSize = 25;
 
     // Points to the start of a list of resource names.
     extern const char* namedResourceList[];

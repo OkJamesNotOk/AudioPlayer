@@ -68,9 +68,6 @@ public:
     // set text for the label, which is used to display the current track name
     void scrollLabelTextSet(const juce::String& str);
 
-    // Used to set space key to trigger the play button.
-    bool keyPressed(const KeyPress& key);
-
     void restoreSavedState();
 
     // window thumbnail task
@@ -89,6 +86,15 @@ public:
     void setComponentsMargin(int newMargin);
     int getComponentsMargin() const { return componentsMargin; }
 
+    void setSeekStep(int newStep);
+    int getSeekStep() const { return seekStepSeconds; }
+
+    bool handleKeyPress(const juce::KeyPress& key);
+
+    void seekBySeconds(double sec);
+
+    void newSongOnPlkaylist(juce::File target);
+
 private:
     // file chooser, used to add files into the player or the playlist
     FileChooser fChooser{ "Select a file..." };
@@ -102,8 +108,11 @@ private:
     std::vector<juce::Button*> rowButtons;
 
     juce::DrawableButton playButton{ "playButton", juce::DrawableButton::ImageOnButtonBackground };
+    juce::DrawableButton forwardSecondsButton{ "forwardSecondsButton", juce::DrawableButton::ImageOnButtonBackground };
+    juce::DrawableButton rewindSecondsButton{ "rewindSecondsButton", juce::DrawableButton::ImageOnButtonBackground };
     juce::DrawableButton prevButton{ "prevButton", juce::DrawableButton::ImageOnButtonBackground };
     juce::DrawableButton nextButton{ "nextButton", juce::DrawableButton::ImageOnButtonBackground };
+    
     TextButton loadButton{ "LOAD" };
     TextButton loopButton{ "LOOP" };
 
@@ -166,6 +175,10 @@ private:
     bool autoplay = true;
 
     int componentsMargin = 5;
+
+    double seekStepSeconds = 5.0;
+
+    double maxVolume = 1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlaylistPlayer)
 };

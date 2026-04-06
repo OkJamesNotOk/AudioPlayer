@@ -75,13 +75,26 @@ void SettingsComponent::initialiseDefinitions()
             SettingType::boolean,
             false
         },
-
         {
             "playerMargin",
             "Player Margin",
             "Set Margin for components of the player",
             SettingType::integer,
             5
+        },
+        {
+            "seekStep",
+            "Seek Step",
+            "Set step in seconds, rewind and forward track by the same amount",
+            SettingType::integer,
+            5
+        },
+        {
+            "limiterEnabled",
+            "Volume Limiter",
+            "Turn the playback volume limiter on or off.",
+            SettingType::boolean,
+            true
         }
     };
 
@@ -146,7 +159,12 @@ void SettingsComponent::createSettingRow(const SettingDefinition& definition)
         row.slider->setComponentID(definition.key);
         row.slider->setSliderStyle(juce::Slider::IncDecButtons);
         row.slider->setTextBoxStyle(juce::Slider::TextBoxAbove, false, 60, 24);
-        row.slider->setRange(0, 30, 1);
+
+        if (definition.key == "seekStep")
+            row.slider->setRange(1, 30, 1);
+        else
+            row.slider->setRange(0, 30, 1);
+
         row.slider->setTooltip(definition.description);
         addAndMakeVisible(*row.slider);
         break;

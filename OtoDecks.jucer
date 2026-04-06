@@ -4,6 +4,13 @@
               jucerFormatVersion="1">
   <MAINGROUP id="mcJZqF" name="AudioPlaylistPlayer">
     <GROUP id="{356C603F-01E1-55B2-02A0-F2D89D9A59E6}" name="Source">
+      <FILE id="hRRd97" name="VolumeLimiter.cpp" compile="1" resource="0"
+            file="Source/VolumeLimiter.cpp"/>
+      <FILE id="mvWfH9" name="VolumeLimiter.h" compile="0" resource="0" file="Source/VolumeLimiter.h"/>
+      <FILE id="jk3Fj2" name="forward-solid.png" compile="0" resource="1"
+            file="Source/icons/forward-solid.png"/>
+      <FILE id="kevBIS" name="rewind-solid.png" compile="0" resource="1"
+            file="Source/icons/rewind-solid.png"/>
       <FILE id="z0Nuhb" name="settings3.5.png" compile="0" resource="1" file="Source/icons/settings3.5.png"/>
       <FILE id="aL2T8w" name="settings.png" compile="0" resource="1" file="Source/icons/settings.png"/>
       <FILE id="Is8D1t" name="settings2.png" compile="0" resource="1" file="Source/icons/settings2.png"/>

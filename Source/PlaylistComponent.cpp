@@ -538,7 +538,7 @@ void PlaylistComponent::filesDropped(const StringArray& files, int x, int y) {
 void PlaylistComponent::addFileToPlaylist(const File& file) {
     if (!checkFileDuplicate(file))
     {
-        trackTitles.push_back({ file, getTrackDuration(file) }); // cache once
+        trackTitles.push_back({ file, getTrackDuration(file) });
         updateFilter();
         tableComponent.updateContent();
     }

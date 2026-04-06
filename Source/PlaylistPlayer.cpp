@@ -35,9 +35,6 @@ PlaylistPlayer::PlaylistPlayer(DJAudioPlayer* _player,
 
     startTimer(500);
 
-    // enable keyboards events
-    setWantsKeyboardFocus(true);
-
     addAndMakeVisible(loopDisplay);
 
     // add mouse listener to loopDisplay to draw markers
@@ -49,7 +46,9 @@ PlaylistPlayer::~PlaylistPlayer()
     stopTimer();
 
     playButton.setLookAndFeel(nullptr);
-    //loadButton.setLookAndFeel(nullptr);
+    forwardSecondsButton.setLookAndFeel(nullptr);
+    rewindSecondsButton.setLookAndFeel(nullptr);
+    loadButton.setLookAndFeel(nullptr);
     loopButton.setLookAndFeel(nullptr);
     prevButton.setLookAndFeel(nullptr);
     nextButton.setLookAndFeel(nullptr);
@@ -66,13 +65,14 @@ PlaylistPlayer::~PlaylistPlayer()
 void PlaylistPlayer::initialiseButtonGroups()
 {
     //arrays of buttons
-    transportButtons = { &playButton, &prevButton, &nextButton };
+    transportButtons = { &playButton, &prevButton, &nextButton, &forwardSecondsButton, &rewindSecondsButton};
     loopButtons = { &loopButton, &loopStartButton, &loopEndButton };
     rowButtons =
     {
         &prevButton,
         &playButton,
         &nextButton,
+        & rewindSecondsButton, &loadButton, & forwardSecondsButton,
         &loopButton,
         &loopStartButton,
         &loopEndButton
@@ -84,6 +84,7 @@ void PlaylistPlayer::initialiseButtons()
     std::vector<juce::Button*> allButtons =
     {
         &playButton, &prevButton, &nextButton,
+        &forwardSecondsButton, &loadButton, &rewindSecondsButton,
         &loopButton, &loopStartButton, &loopEndButton
     };
 
@@ -98,11 +99,15 @@ void PlaylistPlayer::initialiseButtons()
     auto pauseImage = ImageHelpers::loadPngFromBinaryData(BinaryData::pausesolid_png, BinaryData::pausesolid_pngSize);
     auto prevImage = ImageHelpers::loadPngFromBinaryData(BinaryData::skipprevsolid_png, BinaryData::skipprevsolid_pngSize);
     auto nextImage = ImageHelpers::loadPngFromBinaryData(BinaryData::skipnextsolid_png, BinaryData::skipnextsolid_pngSize);
+    auto rewindImage = ImageHelpers::loadPngFromBinaryData(BinaryData::rewindsolid_png, BinaryData::rewindsolid_pngSize);
+    auto forwardImage = ImageHelpers::loadPngFromBinaryData(BinaryData::forwardsolid_png, BinaryData::forwardsolid_pngSize);
 
     auto playDrawable = ImageHelpers::makeDrawableFromImage(playImage);
     auto pauseDrawable = ImageHelpers::makeDrawableFromImage(pauseImage);
     auto prevDrawable = ImageHelpers::makeDrawableFromImage(prevImage);
     auto nextDrawable = ImageHelpers::makeDrawableFromImage(nextImage);
+    auto rewindDrawable = ImageHelpers::makeDrawableFromImage(rewindImage);
+    auto forwardDrawable = ImageHelpers::makeDrawableFromImage(forwardImage);
 
     playButton.setClickingTogglesState(true);
     playButton.setColour(juce::TextButton::buttonColourId, juce::Colour::fromString("#FFB48B9E"));
@@ -115,11 +120,20 @@ void PlaylistPlayer::initialiseButtons()
 
     nextButton.setColour(juce::TextButton::buttonColourId, juce::Colour::fromString("#FFFFBE48"));
     nextButton.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+
+    rewindSecondsButton.setColour(juce::TextButton::buttonColourId, juce::Colour::fromString("#FFFFBE48"));
+    rewindSecondsButton.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+
+    forwardSecondsButton.setColour(juce::TextButton::buttonColourId, juce::Colour::fromString("#FFFFBE48"));
+    forwardSecondsButton.setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+
     playButton.setImages(playDrawable.get(), nullptr, nullptr, nullptr,
         pauseDrawable.get(), nullptr, nullptr, nullptr);
 
     prevButton.setImages(prevDrawable.get());
     nextButton.setImages(nextDrawable.get());
+    rewindSecondsButton.setImages(rewindDrawable.get());
+    forwardSecondsButton.setImages(forwardDrawable.get());
 
     for (auto* button : loopButtons)
     {
@@ -145,7 +159,8 @@ void PlaylistPlayer::initialiseSliders()
     volSlider.setSliderStyle(juce::Slider::LinearVertical);
     // add mouse listener to change slider colour
     volSlider.addMouseListener(this, true);
-    volSlider.setRange(0.0, 2.0);
+    double maxVolume = player->getMaxVolume();
+    volSlider.setRange(0.0, maxVolume);
     volSlider.setValue(0.7);
     volSlider.setNumDecimalPlacesToDisplay(3);
     volSlider.setTextBoxStyle(juce::Slider::TextBoxAbove, false, 60, 50);
@@ -282,34 +297,20 @@ void PlaylistPlayer::buttonClicked(Button* button)
     if (button == &prevButton)
     {
         juce::File previousTrack = playlistComponent.getPreviousTrack(currentFile);
-        if (previousTrack.existsAsFile())
-        {
-            currentFile = previousTrack;
-            playlistComponent.setCurrentPlayingFile(currentFile);
-            player->loadURL(juce::URL{ previousTrack });
-            waveformDisplay.loadURL(juce::URL{ previousTrack });
-            scrollLabelTextSet(previousTrack.getFileName());
-            player->start();
-            playButton.setToggleState(true, juce::NotificationType::dontSendNotification);
-            playButton.setButtonText("| |");
-            persistPlayerState();
-        }
+        newSongOnPlkaylist(previousTrack);
     }
     if (button == &nextButton)
     {
         juce::File nextTrack = playlistComponent.getNextTrack(currentFile);
-        if (nextTrack.existsAsFile())
-        {
-            currentFile = nextTrack;
-            playlistComponent.setCurrentPlayingFile(currentFile);
-            player->loadURL(juce::URL{ nextTrack });
-            waveformDisplay.loadURL(juce::URL{ nextTrack });
-            scrollLabelTextSet(nextTrack.getFileName());
-            player->start();
-            playButton.setToggleState(true, juce::NotificationType::dontSendNotification);
-            playButton.setButtonText("| |");
-            persistPlayerState();
-        }
+        newSongOnPlkaylist(nextTrack);
+    }
+    if (button == &rewindSecondsButton)
+    {
+        seekBySeconds(-seekStepSeconds);
+    }
+    if (button == &forwardSecondsButton)
+    {
+        seekBySeconds(seekStepSeconds);
     }
     if (button == &loopButton) {
         loop = button->getToggleState();
@@ -366,11 +367,38 @@ void PlaylistPlayer::sliderValueChanged(Slider* slider)
         player->setSpeed(slider->getValue());
         persistPlayerState();
     }
+
     if (slider == &posSlider)
     {
         player->setPositionRelative(slider->getValue());
-        //persistPlayerState();
     }
+}
+
+void PlaylistPlayer::newSongOnPlkaylist(juce::File target) {
+    if (target.existsAsFile())
+    {
+        currentFile = target;
+        playlistComponent.setCurrentPlayingFile(currentFile);
+        player->loadURL(juce::URL{ target });
+        waveformDisplay.loadURL(juce::URL{ target });
+        scrollLabelTextSet(target.getFileName());
+        player->start();
+        playButton.setToggleState(true, juce::NotificationType::dontSendNotification);
+        playButton.setButtonText("| |");
+        persistPlayerState();
+    }
+}
+
+void PlaylistPlayer::seekBySeconds(double sec) {
+    double duration = playlistComponent.getOrCacheTrackDuration(currentFile);
+    if (duration <= 0.0) return;
+    double currentTime = posSlider.getValue() * duration;
+
+    double newSeconds = juce::jlimit(0.0, duration, currentTime + sec);
+    double newTime = newSeconds / duration;
+
+    player->setPositionRelative(newTime);
+    posSlider.setValue(newTime, juce::dontSendNotification);
 }
 
 void PlaylistPlayer::volSliderColour() {
@@ -578,16 +606,6 @@ void PlaylistPlayer::itemDropped(const SourceDetails& filename) {
     }
 }
 
-// Bind the space key to the function of the play button
-bool PlaylistPlayer::keyPressed(const KeyPress& key) {
-    if (key == juce::KeyPress::spaceKey) {
-        playButton.triggerClick();
-        return true;
-    }
-
-    return false;
-}
-
 void PlaylistPlayer::restoreSavedState()
 {
     PlaylistComponent::PlayerState savedState;
@@ -700,4 +718,31 @@ void PlaylistPlayer::setComponentsMargin(int newMargin)
     componentsMargin = juce::jmax(0, newMargin);
     resized();
     repaint();
+}
+
+void PlaylistPlayer::setSeekStep(int newStep)
+{
+    seekStepSeconds = juce::jmax(1, newStep);
+}
+
+bool PlaylistPlayer::handleKeyPress(const juce::KeyPress& key)
+{
+    if (key == juce::KeyPress::spaceKey)
+    {
+        return setPlaybackState(!isPlaying());
+    }
+
+    if (key == juce::KeyPress::leftKey)
+    {
+        rewindSecondsButton.triggerClick();
+        return true;
+    }
+
+    if (key == juce::KeyPress::rightKey)
+    {
+        forwardSecondsButton.triggerClick();
+        return true;
+    }
+
+    return false;
 }

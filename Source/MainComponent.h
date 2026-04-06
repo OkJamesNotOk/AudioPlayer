@@ -18,6 +18,7 @@
 #include "PlaylistWindow.h"
 #include "SettingsWindow.h"
 #include "ImageHelper.h"
+#include "VolumeLimiter.h"
 
 //==============================================================================
 /*
@@ -57,6 +58,12 @@ public:
     void updatePlaylistPresentation();
 
     void closePlaylistOnShutDown();
+
+    // set keyboard shortcut
+    bool keyPressed(const KeyPress& key) override;
+
+    void parentHierarchyChanged() override;
+
 private:
 
     AudioFormatManager formatManager;
